@@ -41,28 +41,7 @@
 
 ## 界面截图
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│  [COM3 - CP210x ▼] [115200 ▼] [Connect]    Connected · 60fps│
-├─────────────────────────────────┬────────────────────────────┤
-│                                 │                            │
-│   Real-time Charts              │   3D Attitude Viewer       │
-│   [Acc] [Gyr] [Mag] [Euler]    │   (Z-up ROS coordinate)    │
-│   X(red)/Y(green)/Z(blue)      │   IMU flat board model     │
-│   scrolling waveform            │   quaternion-driven        │
-│                                 │                            │
-├─────────────────────────────────┴────────────────────────────┤
-│  Acc(m/s²)  │ Gyr(°/s) │ Mag(uT)  │ Euler(°) │ Quat │ Env  │
-│  X:  0.12   │ X: 0.03  │ X: 23.1  │ R: 1.2   │ w:.99│ 25°C │
-│  Y: -0.05   │ Y:-0.01  │ Y:-15.4  │ P: 0.8   │ x:.01│ 101  │
-│  Z:  9.81   │ Z: 0.02  │ Z: 42.7  │ Y: 45.0  │ y:.00│ kPa  │
-├──────────────────────────────────────────────────────────────┤
-│  Command Console                                             │
-│  > LOG VERSION                                               │
-│  < HI12 v2.1 OK                                             │
-│  > [input field]                                    [Send]   │
-└──────────────────────────────────────────────────────────────┘
-```
+![HI12 IMU Debugger Screenshot](docs/screenshot.png)
 
 ---
 
@@ -70,45 +49,96 @@
 
 ### 运行 (使用预编译版本)
 
-- Windows 10/11 (x64)
-- WebView2 Runtime (Windows 11 已预装)
-- [CP210x USB-UART 驱动](References/products-master/products-master/usb_uart_drivers/win/) — 运行安装程序即可
+仅需以下环境即可直接运行已编译的程序：
 
-### 开发
+| 依赖 | 说明 | 获取方式 |
+|------|------|---------|
+| **Windows 10/11** | x64 系统 | — |
+| **WebView2 Runtime** | Tauri 渲染引擎 | Windows 11 已预装；Windows 10 请从 [Microsoft 官网](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) 下载安装 |
+| **CP210x USB-UART 驱动** | HI12 设备使用 CP210x 芯片进行 USB 转串口通信 | 从 [Silicon Labs 官网](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers) 下载，或使用本仓库 `References/` 目录下的离线安装包 |
 
-| 工具 | 版本要求 | 安装方式 |
-|------|---------|---------|
-| Node.js | >= 20 LTS | https://nodejs.org/ |
-| pnpm | >= 9 | `npm install -g pnpm` |
-| Rust | stable (>= 1.75) | https://rustup.rs/ |
-| VS C++ Build Tools | 2019+ | Visual Studio Installer → "Desktop development with C++" |
+### 开发环境配置
+
+从源码构建需要安装以下工具链，请按顺序操作：
+
+**1. 安装 Node.js (>= 20 LTS)**
+
+从 https://nodejs.org/ 下载 LTS 版本安装。安装完成后验证：
+
+```bash
+node --version   # 应输出 v20.x 或更高
+npm --version
+```
+
+**2. 安装 pnpm (>= 9)**
+
+```bash
+npm install -g pnpm
+pnpm --version   # 应输出 9.x 或更高
+```
+
+**3. 安装 Rust (stable)**
+
+从 https://rustup.rs/ 下载 `rustup-init.exe` 并运行，选择默认选项。安装完成后**重启终端**，然后验证：
+
+```bash
+rustc --version   # 应输出 1.75+ 版本
+cargo --version
+```
+
+**4. 安装 Microsoft Visual Studio C++ Build Tools**
+
+Rust 在 Windows 上编译需要 MSVC 工具链：
+
+- 下载 [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+- 在安装程序中勾选 **"Desktop development with C++"** 工作负载
+- 如果已安装 Visual Studio (任意版本)，确认该工作负载已启用即可
+
+**5. 安装 CP210x 驱动**
+
+HI12 设备通过 CP210x USB-UART 芯片连接电脑：
+
+- 从 [Silicon Labs 官网](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers) 下载并安装
+- 安装后插入 HI12 设备，在设备管理器中应能看到 `Silicon Labs CP210x USB to UART Bridge (COMx)`
 
 ---
 
 ## 快速开始
 
-### 方式一：直接运行
+### 方式一：直接运行预编译版本
 
-1. 安装 [CP210x 驱动](References/products-master/products-master/usb_uart_drivers/win/)
-2. 运行 `src-tauri/target/release/imu-app.exe`，或使用 NSIS 安装包安装
-3. 用 USB 线连接 HI12 设备
-4. 在工具栏选择对应 COM 端口，波特率选 `115200`，点击 **Connect**
+1. 确保已安装 [CP210x 驱动](#运行-使用预编译版本) 和 WebView2 Runtime
+2. 从 [Releases](https://github.com/ALUnit7/HI12-IMU-Debugger/releases) 下载安装包，或直接运行 `src-tauri/target/release/imu-app.exe`
+3. 用 USB 数据线将 HI12 设备连接到电脑
+4. 打开程序，在工具栏下拉列表中选择对应的 COM 端口 (程序会自动优先选中 CP210x 设备)
+5. 波特率保持默认 `115200` (除非你已修改过设备波特率)
+6. 点击 **Connect**，即可看到实时数据
+
+> **提示**：如果连接后没有数据，在底部命令控制台输入 `LOG ENABLE` 并回车。
 
 ### 方式二：从源码构建
 
+确保已完成上述[开发环境配置](#开发环境配置)，然后：
+
 ```bash
-# 1. 安装前端依赖
+# 1. 克隆仓库
+git clone https://github.com/ALUnit7/HI12-IMU-Debugger.git
+cd HI12-IMU-Debugger
+
+# 2. 安装前端依赖
 pnpm install
 
-# 2. 开发模式 (热重载)
+# 3. 开发模式 (前端热重载 + Rust 自动重编译)
 pnpm tauri dev
 
-# 3. 生产构建
+# 4. 生产构建 (生成可执行文件和安装包)
 pnpm tauri build
-# 输出: src-tauri/target/release/imu-app.exe
-#       src-tauri/target/release/bundle/nsis/*.exe  (安装包)
-#       src-tauri/target/release/bundle/msi/*.msi
 ```
+
+构建产物：
+- `src-tauri/target/release/imu-app.exe` — 可直接运行的程序
+- `src-tauri/target/release/bundle/nsis/*.exe` — NSIS 安装包
+- `src-tauri/target/release/bundle/msi/*.msi` — MSI 安装包
 
 ---
 
