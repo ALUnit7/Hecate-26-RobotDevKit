@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+src-tauri/target/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tauri generated
+src-tauri/gen/
+
+# Environment
+.env
+.env.*
+
+# Logs
+*.log
+
+# Reference materials (read-only, not part of source)
+References/
+imu_cum_cn.pdf
+
+# C++ build artifacts (legacy)
+cmake-build-debug/
+cmake-build-release/
+CMakeLists.txt
+main.cpp
+
+# Claude Code local settings
+.claude/
