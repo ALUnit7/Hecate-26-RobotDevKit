@@ -2,13 +2,15 @@
 
 ## Project Overview
 
-A desktop debugging tool for HiPNUC HI12 series IMU (Inertial Measurement Unit), built with **Tauri v2 + React + TypeScript**. The tool connects to HI12 via USB-UART serial port, parses binary protocol data in real-time, and provides visualization including real-time charts, 3D attitude display, and a command console.
+A desktop debugging tool for HiPNUC HI12 series IMU (Inertial Measurement Unit), built with **Tauri v2 + React 19 + TypeScript**. The tool connects to HI12 via USB-UART serial port, parses binary protocol data in real-time, and provides visualization including real-time charts, 3D attitude display, and a command console.
+
+**Status**: v0.1.0 released. Core features (serial connection, protocol parsing, real-time charts, 3D visualization, AT command console) are fully functional and tested with real HI12 hardware.
 
 ## Target Device
 
 - **Device**: HiPNUC HI12 series IMU
-- **Interface**: USB-to-UART via CP210x bridge chip
-- **Protocol**: HiPNUC binary protocol (primary packet type: **HI91**)
+- **Interface**: USB-to-UART via CP210x bridge chip (VID: 0x10C4, PID: 0xEA60)
+- **Protocol**: HiPNUC binary protocol (packet type: **HI91 / 0x91**)
 - **Default baud rate**: 115200 (configurable: 4800 ~ 921600)
 - **Serial config**: 8 data bits, no parity, 1 stop bit (8N1), no flow control
 
@@ -17,12 +19,12 @@ A desktop debugging tool for HiPNUC HI12 series IMU (Inertial Measurement Unit),
 | Layer              | Technology                  | Purpose                                      |
 | ------------------ | --------------------------- | -------------------------------------------- |
 | Desktop Framework  | Tauri v2                    | Native window, serial port access via Rust   |
-| Frontend Framework | React 18 + TypeScript       | UI components                                |
-| Build Tool         | Vite                        | Fast dev server and bundler                   |
-| UI Components      | Shadcn/ui + Tailwind CSS v4 | Modern, customizable component library       |
+| Frontend Framework | React 19 + TypeScript       | UI components                                |
+| Build Tool         | Vite 7                      | Fast dev server and bundler                   |
+| Styling            | Tailwind CSS v4             | Atomic CSS with dark theme                   |
 | Charts             | uPlot                       | High-performance real-time time-series charts |
-| 3D Visualization   | Three.js (react-three-fiber)| IMU attitude rendering from quaternion data  |
-| State Management   | Zustand                     | Lightweight reactive store for IMU data      |
+| 3D Visualization   | Three.js (react-three-fiber + drei) | IMU attitude rendering from quaternion data |
+| State Management   | Zustand 5                   | Lightweight reactive store for IMU data      |
 | Serial Port        | Rust `serialport` crate     | Native serial I/O in Tauri backend           |
 | Protocol Parsing   | Rust (custom)               | Binary frame decoding, CRC16 validation      |
 
@@ -31,51 +33,55 @@ A desktop debugging tool for HiPNUC HI12 series IMU (Inertial Measurement Unit),
 ```
 HI12_Series_IMU_Debugging_Tool2/
 ├── CLAUDE.md                    # This file - project guide
-├── References/                  # Official HiPNUC SDK & examples (read-only reference)
+├── README.md                    # User-facing documentation
+├── docs/
+│   └── screenshot.png           # Application screenshot
+├── References/                  # Official HiPNUC SDK & examples (read-only, gitignored)
 │   └── products-master/
-├── imu_cum_cn.pdf              # HiPNUC IMU communication protocol manual
+├── imu_cum_cn.pdf              # HiPNUC IMU protocol manual (gitignored)
 ├── src-tauri/                  # Rust backend (Tauri v2)
 │   ├── Cargo.toml
 │   ├── tauri.conf.json
+│   ├── build.rs
 │   ├── capabilities/
 │   │   └── default.json        # Tauri v2 capability permissions
 │   ├── src/
 │   │   ├── main.rs             # Tauri entry point
-│   │   ├── lib.rs              # Tauri setup, plugin registration, command registration
-│   │   ├── serial.rs           # Serial port management (open/close/list/write)
-│   │   ├── protocol.rs         # HiPNUC binary protocol parser (CRC16, HI91/HI81/HI83)
-│   │   └── state.rs            # Shared application state (serial port handle, connection status)
+│   │   ├── lib.rs              # Tauri setup, plugin + command registration
+│   │   ├── serial.rs           # Serial port management (list/open/close/send/record)
+│   │   ├── protocol.rs         # HiPNUC binary protocol parser (CRC16, HI91, unit tests)
+│   │   └── state.rs            # Shared state (port handle, decoder, recording state)
 │   └── icons/
 ├── src/                        # React frontend
-│   ├── main.tsx                # React entry + Tauri event listeners
-│   ├── App.tsx                 # Root layout
-│   ├── app.css                 # Global styles (Tailwind)
+│   ├── main.tsx                # React entry point
+│   ├── App.tsx                 # Root layout (toolbar + charts/3D + dashboard + console)
+│   ├── App.css                 # Tailwind CSS v4 imports + dark theme + uPlot overrides
 │   ├── lib/
-│   │   └── utils.ts            # Shadcn/ui cn() utility
+│   │   └── utils.ts            # cn() utility (clsx + tailwind-merge)
 │   ├── stores/
-│   │   └── imu-store.ts        # Zustand store: IMU data, connection state, history buffer
+│   │   └── imu-store.ts        # Zustand store: latest data, history buffer, connection state
 │   ├── hooks/
-│   │   └── use-imu-data.ts     # Custom hook: subscribe to Tauri IMU events, throttle to 60fps
+│   │   └── use-imu-data.ts     # Tauri event listener + 60fps RAF throttle + FPS counter
 │   ├── components/
-│   │   ├── ui/                 # Shadcn/ui base components (button, select, card, etc.)
 │   │   ├── toolbar/
-│   │   │   └── ConnectionToolbar.tsx  # Port selector, baud rate, connect/disconnect, record
+│   │   │   └── ConnectionToolbar.tsx  # Port select, baud rate, connect/disconnect, status
 │   │   ├── dashboard/
-│   │   │   └── DataDashboard.tsx      # Numeric data table (acc/gyr/mag/euler/quat/temp)
+│   │   │   └── DataDashboard.tsx      # Numeric display (acc/gyr/mag/euler/quat/env)
 │   │   ├── charts/
-│   │   │   └── RealtimeChart.tsx      # uPlot time-series chart with tab switching
+│   │   │   └── RealtimeChart.tsx      # uPlot with 4 tabs (acc/gyr/mag/euler)
 │   │   ├── viewer3d/
-│   │   │   └── AttitudeViewer.tsx     # 3D IMU attitude visualization (react-three-fiber)
+│   │   │   └── AttitudeViewer.tsx     # 3D IMU model, ROS Z-up coordinate system
 │   │   └── console/
-│   │       └── CommandConsole.tsx     # AT command input + response display
+│   │       └── CommandConsole.tsx     # AT command input + response log
 │   └── types/
-│       └── imu.ts              # TypeScript type definitions for IMU data
-├── components.json             # Shadcn/ui configuration
-├── tailwind.config.ts          # Tailwind CSS configuration
-├── tsconfig.json
-├── vite.config.ts
+│       └── imu.ts              # ImuData and PortInfo TypeScript interfaces
+├── index.html
 ├── package.json
-└── index.html
+├── pnpm-lock.yaml
+├── tsconfig.json
+├── tsconfig.node.json
+├── vite.config.ts
+└── .gitignore
 ```
 
 ## HiPNUC Binary Protocol Specification
@@ -135,7 +141,6 @@ This is the **only packet type** the HI12 series IMU outputs. Total payload: **7
 **HI12-specific notes**:
 - HI12 is a 9-axis IMU (accelerometer + gyroscope + magnetometer) with attitude calculation
 - HI12 does **NOT** have GNSS/INS, so it only outputs **0x91 (HI91)** packets
-- HI81 (INS) and HI83 (flexible bitmap) are for other product lines (HI81, HI226, etc.) - we implement parsing for completeness but HI12 will not produce them
 - Accelerometer raw values are in **G** (gravity units), multiply by 9.80665 for m/s^2
 - All multi-byte values are **little-endian**
 - All floats are **IEEE 754 single-precision (32-bit)**
@@ -154,8 +159,6 @@ Commands are ASCII strings terminated with `\r\n`. Send via serial port.
 | `SAVECONFIG\r\n`           | Save configuration to flash          |
 | `REBOOT\r\n`               | Reboot device                        |
 
-Response: ASCII text containing "OK" on success.
-
 **Important**: Must send `LOG DISABLE` before sending configuration commands.
 
 ## Architecture & Data Flow
@@ -169,11 +172,13 @@ USB-UART (CP210x)
 │                                                 │
 │  serial.rs                                      │
 │  ├─ list_ports() → Vec<PortInfo>                │
-│  ├─ open_port(name, baud) → Result              │
-│  ├─ close_port() → Result                       │
-│  └─ send_command(cmd) → Result                  │
+│  ├─ open_port(name, baud) → spawns read thread  │
+│  ├─ close_port() → stops thread, drops port     │
+│  ├─ send_command(cmd) → writes ASCII + \r\n     │
+│  ├─ start_recording(path) → CSV writer          │
+│  └─ stop_recording() → flush + close            │
 │       │                                         │
-│       ▼ (spawned read thread)                   │
+│       ▼ (spawned read thread, 256B buffer)      │
 │  protocol.rs                                    │
 │  ├─ byte-by-byte state machine                  │
 │  ├─ frame sync (0x5A 0xA5)                      │
@@ -181,7 +186,7 @@ USB-UART (CP210x)
 │  └─ HI91 struct deserialization                 │
 │       │                                         │
 │       ▼ (Tauri event emit)                      │
-│  "imu-data" event → JSON { type, acc, gyr, ... }│
+│  "imu-data" event → JSON { acc, gyr, mag, ... } │
 └────────┬────────────────────────────────────────┘
          │ Tauri IPC (event system)
          ▼
@@ -190,67 +195,27 @@ USB-UART (CP210x)
 │                                                 │
 │  hooks/use-imu-data.ts                          │
 │  ├─ listen("imu-data") subscription             │
-│  ├─ throttle to 60fps for UI rendering          │
-│  └─ accumulate history buffer (last N samples)  │
+│  ├─ buffers events, flushes at 60fps via RAF    │
+│  └─ FPS counter (1s interval)                   │
 │       │                                         │
 │       ▼                                         │
 │  stores/imu-store.ts (Zustand)                  │
 │  ├─ latest: ImuData (current frame)             │
-│  ├─ history: ImuData[] (ring buffer, ~600 pts)  │
-│  ├─ connected: boolean                          │
-│  ├─ portName: string                            │
-│  └─ recording: boolean                          │
+│  ├─ history: ImuData[] (ring buffer, 600 pts)   │
+│  ├─ timestamps: number[] (for chart X axis)     │
+│  ├─ connected / portName / baudRate             │
+│  ├─ recording / fps                             │
+│  └─ consoleLines: {type, text}[]                │
 │       │                                         │
 │       ▼                                         │
 │  UI Components                                  │
-│  ├─ ConnectionToolbar (port/baud/connect)       │
-│  ├─ DataDashboard (numeric values)              │
-│  ├─ RealtimeChart (uPlot, acc/gyr/mag tabs)     │
-│  ├─ AttitudeViewer (3D quaternion visualization) │
+│  ├─ ConnectionToolbar (port/baud/connect/status)│
+│  ├─ DataDashboard (6-column numeric display)    │
+│  ├─ RealtimeChart (uPlot, 4 tab views)         │
+│  ├─ AttitudeViewer (3D, ROS Z-up, quaternion)  │
 │  └─ CommandConsole (AT command I/O)             │
 └─────────────────────────────────────────────────┘
 ```
-
-### Data Flow Details
-
-1. **Rust read thread**: After `open_port()`, a background thread continuously reads bytes from the serial port and feeds them into the protocol parser one byte at a time
-2. **Protocol parser**: State machine that syncs on `0x5A 0xA5`, accumulates frame bytes, validates CRC16, and deserializes the HI91 payload into a typed struct
-3. **Event emit**: Each successfully parsed frame is serialized to JSON and emitted as a Tauri event `"imu-data"`
-4. **Frontend throttle**: The React hook receives all events but only updates the Zustand store at 60fps using `requestAnimationFrame`, dropping intermediate frames for smooth rendering
-5. **History buffer**: A ring buffer of ~600 data points (10 seconds at 60fps) is maintained for chart rendering
-6. **Command path**: User types AT commands in the console → `invoke("send_command")` → Rust writes bytes to serial port → response bytes are emitted as `"serial-response"` event
-
-## UI Layout
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│  [Port ▼] [Baud ▼] [Connect] [Record] [Status indicator]    │
-├─────────────────────────────────┬────────────────────────────┤
-│                                 │                            │
-│   Real-time Charts              │   3D Attitude Viewer       │
-│   [Acc] [Gyr] [Mag] [Euler]    │   (IMU cube rotating       │
-│   uPlot scrolling graph         │    per quaternion data)    │
-│   X/Y/Z channels overlaid      │                            │
-│                                 │                            │
-├─────────────────────────────────┴────────────────────────────┤
-│  Data Dashboard                                              │
-│  ┌──────────┬──────────┬──────────┬────────┬──────┬───────┐  │
-│  │ Acc(m/s2)│ Gyr(d/s) │ Mag(uT)  │ Euler  │ Quat │ Env   │  │
-│  │ X: 0.12  │ X: 0.03  │ X: 23.1  │ R:1.2° │ w:.99│ T:25° │  │
-│  │ Y:-0.05  │ Y:-0.01  │ Y:-15.4  │ P:0.8° │ x:.01│ P:101 │  │
-│  │ Z: 9.81  │ Z: 0.02  │ Z: 42.7  │ Y:45°  │ y:.00│ kPa   │  │
-│  └──────────┴──────────┴──────────┴────────┴──────┴───────┘  │
-├──────────────────────────────────────────────────────────────┤
-│  Command Console                                             │
-│  > LOG VERSION                                               │
-│  < HI12 v2.1 OK                                             │
-│  > [input field]                                    [Send]   │
-└──────────────────────────────────────────────────────────────┘
-```
-
-- **Dark theme** by default (engineering tool convention)
-- **Responsive** left-right split: charts 60%, 3D viewer 40%
-- Dashboard shows converted units: acc in m/s^2 (raw G * 9.80665)
 
 ## Development Commands
 
@@ -258,59 +223,66 @@ USB-UART (CP210x)
 # Install frontend dependencies
 pnpm install
 
-# Dev mode (frontend + Tauri backend hot-reload)
+# Dev mode (frontend hot-reload + Rust auto-recompile)
 pnpm tauri dev
 
-# Build production release
+# Build production release (exe + MSI + NSIS installer)
 pnpm tauri build
 
-# Add Shadcn/ui components
-pnpm dlx shadcn@latest add button card select tabs input
+# Run Rust unit tests (protocol parser)
+cd src-tauri && cargo test
+
+# Frontend-only build
+pnpm build
 ```
 
-## Key Implementation Notes
+## Key Implementation Details
 
-### Protocol Parser (Rust)
-- Byte-by-byte state machine matching the reference C implementation in `drivers/hipnuc_dec.c`
-- States: `WaitSync1 → WaitSync2 → ReadHeader → ReadPayload → Validate`
+### Protocol Parser (Rust) — `src-tauri/src/protocol.rs`
+- Byte-by-byte state machine: `WaitSync1 → WaitSync2 → ReadHeader → ReadPayload → Validate`
 - CRC16 computed over `buf[0..4] + buf[6..6+len]` (header sans CRC + payload)
-- Must handle partial reads and buffer accumulation correctly
-- Reference Python parser: `References/products-master/products-master/examples/python/parsers/hipnuc_serial_parser.py`
+- 4 unit tests verified: `test_crc16`, `test_parse_hi91_frame`, `test_resync_after_garbage`, `test_crc_mismatch_rejected`
+- Reference implementation: `References/products-master/products-master/drivers/hipnuc_dec.c`
 
-### Serial Port (Rust)
-- Use `serialport` crate with `available_ports()` for port enumeration
-- Filter by `UsbPort` type with VID/PID matching CP210x (VID: 0x10C4, PID: 0xEA60) for auto-detection
-- Read thread uses `port.read()` in a loop with small buffer (256 bytes)
-- Thread must be cleanly stoppable via `Arc<AtomicBool>` flag when disconnecting
+### Serial Port (Rust) — `src-tauri/src/serial.rs`
+- Port enumeration with USB VID/PID for CP210x auto-detection
+- Background read thread with `Arc<AtomicBool>` for clean shutdown
+- Port cloned via `try_clone()` — read thread gets one copy, main thread keeps another for writes
+- 100ms read timeout, 256-byte buffer
+- CSV recording via `start_recording` / `stop_recording` commands (backend ready, UI not yet wired)
 
 ### Frontend Performance
-- **60fps throttle**: The IMU may stream at 100-400Hz. Frontend only renders at 60fps max
-- **uPlot**: Handles thousands of points efficiently; update data arrays in-place, call `uPlot.setData()`
-- **Ring buffer**: Fixed-size array with head pointer, avoids array allocation churn
-- **React memoization**: Chart and 3D components should use `React.memo` to avoid unnecessary re-renders
+- **60fps throttle**: IMU streams at 100-400Hz, `use-imu-data.ts` buffers via `useRef` and flushes at 60fps using `requestAnimationFrame`
+- **uPlot**: Float64Array data arrays updated in-place, `uPlot.setData()` called on each render
+- **History ring buffer**: 600 data points (10 seconds at 60fps), oldest data dropped
+- **FPS counter**: 1-second interval counter displayed in toolbar
 
-### Data Recording
-- Record button toggles recording state
-- Rust backend writes raw parsed data to CSV file with timestamp
-- Columns: `timestamp_ms, acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z, mag_x, mag_y, mag_z, roll, pitch, yaw, qw, qx, qy, qz, temp, pressure`
+### 3D Visualization — `src/components/viewer3d/AttitudeViewer.tsx`
+- **ROS coordinate system**: Z-axis up. A `ROS_TO_THREE` quaternion (-90° around X axis) converts to Three.js Y-up
+- **IMU model**: Flat box `[2.4, 1.6, 0.4]` — large XY footprint, thin in Z (local Z maps to visual height after transform)
+- **Quaternion-driven**: `ROS_TO_THREE.multiply(imuQuat)` — no gimbal lock
+- **Red arrow**: Points along X+ (device forward direction)
+- **Axis labels**: X(red), Y(green), Z(blue) with text labels
+
+## What's NOT Implemented Yet (TODO)
+
+See `README.md` for the full prioritized TODO list. Key items:
+- **Data recording UI** — Backend `start_recording`/`stop_recording` commands exist, need toolbar button + file dialog
+- **Serial response display** — AT command responses not yet routed back to console (need `serial-response` event)
+- **Disconnect detection** — No USB unplug detection or auto-reconnect
+- **Error statistics** — CRC failure count, frame drop rate not tracked
 
 ## Environment Requirements
 
-The following must be installed before development:
-
-1. **Node.js** >= 20 LTS — https://nodejs.org/
-2. **pnpm** >= 9 — `npm install -g pnpm` (after installing Node.js)
-3. **Rust** (stable) — https://rustup.rs/
-4. **Tauri v2 prerequisites** (Windows):
-   - Microsoft Visual Studio C++ Build Tools (with "Desktop development with C++" workload)
-   - WebView2 (pre-installed on Windows 11)
-   - See: https://v2.tauri.app/start/prerequisites/
-5. **CP210x USB-UART driver** — Located in `References/products-master/products-master/usb_uart_drivers/win/`
+1. **Node.js** >= 20 LTS
+2. **pnpm** >= 9
+3. **Rust** (stable, >= 1.75)
+4. **MSVC Build Tools** (Windows: "Desktop development with C++" workload)
+5. **WebView2 Runtime** (pre-installed on Windows 11)
+6. **CP210x USB-UART driver** — from [Silicon Labs](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers)
 
 ## Reference Materials
 
-- `References/products-master/products-master/drivers/hipnuc_dec.h` — Protocol structs and constants
-- `References/products-master/products-master/drivers/hipnuc_dec.c` — C protocol decoder (reference implementation)
-- `References/products-master/products-master/examples/python/parsers/hipnuc_serial_parser.py` — Python parser (reference)
-- `References/products-master/products-master/examples/python/commands/read_data.py` — Python serial read example
+- `References/products-master/products-master/drivers/hipnuc_dec.c` — C protocol decoder (reference)
+- `References/products-master/products-master/examples/python/parsers/hipnuc_serial_parser.py` — Python parser
 - `imu_cum_cn.pdf` — Full HiPNUC IMU communication protocol manual (Chinese)
