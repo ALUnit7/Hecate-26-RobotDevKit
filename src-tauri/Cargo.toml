@@ -1,0 +1,22 @@
+[package]
+name = "imu-app"
+version = "0.1.0"
+description = "HI12 Series IMU Debugging Tool"
+authors = ["you"]
+edition = "2021"
+
+[lib]
+name = "imu_app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serialport = "4"
+log = "0.4"
+env_logger = "0.11"
