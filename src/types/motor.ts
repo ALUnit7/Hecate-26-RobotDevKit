@@ -55,3 +55,34 @@ export interface PrivateFeedback {
   torque: number;
   temperature: number;
 }
+
+export interface DiscoveredMotor {
+  id: number;
+  protocol: "private" | "mit" | "unknown";
+}
+
+export interface PerMotorState {
+  feedback: MotorFeedback | null;
+  history: MotorFeedback[];
+  timestamps: number[];
+  paramValues: Record<number, { value_f32: number; value_u32: number; raw: number[]; success: boolean }>;
+  faultStatus: FaultStatus | null;
+  privateFeedback: PrivateFeedback | null;
+  deviceId: string | null;
+  firmwareVersion: string | null;
+  protocol: "private" | "mit" | "unknown";
+}
+
+export function createPerMotorState(protocol: "private" | "mit" | "unknown" = "unknown"): PerMotorState {
+  return {
+    feedback: null,
+    history: [],
+    timestamps: [],
+    paramValues: {},
+    faultStatus: null,
+    privateFeedback: null,
+    deviceId: null,
+    firmwareVersion: null,
+    protocol,
+  };
+}

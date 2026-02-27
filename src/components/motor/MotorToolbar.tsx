@@ -2,11 +2,12 @@ import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useMotorStore } from "../../stores/motor-store";
-import { FiWifi, FiWifiOff, FiSettings, FiActivity, FiSearch } from "react-icons/fi";
-import type { UdpConfig } from "../../types/motor";
+import { FiWifi, FiWifiOff, FiSettings, FiActivity, FiSearch, FiStopCircle } from "react-icons/fi";
+import type { UdpConfig, DiscoveredMotor } from "../../types/motor";
 
 export function MotorToolbar() {
-  const { connected, config, setConfig, setConnected, fps } = useMotorStore();
+  const { connected, config, setConfig, setConnected, fps,
+    discoveredMotors, setDiscoveredMotors, activeMotorId, setActiveMotor, addMotor } = useMotorStore();
   const [showSettings, setShowSettings] = useState(false);
   const [localConfig, setLocalConfig] = useState<UdpConfig>(config);
   const [error, setError] = useState("");
@@ -46,34 +47,72 @@ export function MotorToolbar() {
     setError("");
     setScanning(true);
 
-    // Collect scan results from events
-    const foundIds = new Set<number>();
-    const unlisten = await listen<number>("motor-scan-result", (event) => {
-      foundIds.add(event.payload);
+    const foundPrivate = new Set<number>();
+    const foundMit = new Set<number>();
+    const unlistenPriv = await listen<number>("motor-scan-result", (event) => {
+      foundPrivate.add(event.payload);
+    });
+    const unlistenMit = await listen<number>("motor-mit-scan-result", (event) => {
+      foundMit.add(event.payload);
     });
 
     try {
       await invoke("udp_scan_motors");
-      // Wait a bit for any remaining responses
       await new Promise((r) => setTimeout(r, 200));
     } catch (e) {
       setError(String(e));
     } finally {
-      unlisten();
+      unlistenPriv();
+      unlistenMit();
       setScanning(false);
 
-      const ids = Array.from(foundIds).sort((a, b) => a - b);
-      if (ids.length === 0) {
+      const discovered: DiscoveredMotor[] = [];
+      for (const id of foundPrivate) {
+        discovered.push({ id, protocol: "private" });
+      }
+      for (const id of foundMit) {
+        if (!foundPrivate.has(id)) {
+          discovered.push({ id, protocol: "mit" });
+        }
+      }
+      discovered.sort((a, b) => a.id - b.id);
+      setDiscoveredMotors(discovered);
+
+      // Register each discovered motor in the store
+      for (const m of discovered) {
+        addMotor(m.id, m.protocol);
+      }
+
+      if (discovered.length === 0) {
         setDiagResult("Scan complete: no motors found (0~127). Check CAN baud rate and wiring.");
       } else {
-        setDiagResult(`Found ${ids.length} motor(s): ${ids.map((id) => `ID=${id}`).join(", ")}`);
-        if (ids.length >= 1) {
-          setLocalConfig((c) => ({ ...c, motor_id: ids[0] }));
-          // Sync to backend so subsequent commands target the found motor
-          invoke("udp_update_motor_ids", { motorId: ids[0], masterId: localConfig.master_id }).catch(console.error);
+        setDiagResult(
+          `Found ${discovered.length} motor(s): ${discovered.map((m) => `ID=${m.id}${m.protocol === "mit" ? " (MIT)" : ""}`).join(", ")}`
+        );
+        // Auto-select the first motor
+        if (discovered.length >= 1) {
+          setActiveMotor(discovered[0].id);
+          setLocalConfig((c) => ({ ...c, motor_id: discovered[0].id }));
+          invoke("udp_update_motor_ids", { motorId: discovered[0].id, masterId: localConfig.master_id }).catch(console.error);
         }
       }
     }
+  };
+
+  const handleStopAll = async () => {
+    setError("");
+    try {
+      const ids = discoveredMotors.map((m) => m.id);
+      await invoke("motor_stop_all", { motorIds: ids });
+    } catch (e) {
+      setError(String(e));
+    }
+  };
+
+  const handleSelectMotor = (id: number) => {
+    setActiveMotor(id);
+    setLocalConfig((c) => ({ ...c, motor_id: id }));
+    invoke("udp_update_motor_ids", { motorId: id, masterId: localConfig.master_id }).catch(console.error);
   };
 
   return (
@@ -103,23 +142,8 @@ export function MotorToolbar() {
         disabled={connected}
       />
 
-      {/* Motor / Master ID */}
-      <label className="text-zinc-500 ml-2">Motor ID</label>
-      <input
-        className="w-16 px-2 py-1 rounded bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs focus:outline-none focus:border-zinc-500"
-        type="number"
-        min={0}
-        max={127}
-        value={localConfig.motor_id}
-        onChange={(e) => {
-          const val = parseInt(e.target.value) || 1;
-          setLocalConfig((c) => ({ ...c, motor_id: val }));
-          if (connected) {
-            invoke("udp_update_motor_ids", { motorId: val, masterId: localConfig.master_id }).catch(console.error);
-          }
-        }}
-      />
-      <label className="text-zinc-500">Master ID</label>
+      {/* Master ID */}
+      <label className="text-zinc-500 ml-2">Master ID</label>
       <input
         className="w-16 px-2 py-1 rounded bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs focus:outline-none focus:border-zinc-500"
         type="number"
@@ -165,6 +189,15 @@ export function MotorToolbar() {
           {scanning && (
             <span className="text-[10px] text-blue-400 animate-pulse">Scanning...</span>
           )}
+          {discoveredMotors.length > 1 && (
+            <button
+              className="p-1 rounded hover:bg-zinc-700 text-red-400 hover:text-red-300 transition-colors"
+              onClick={handleStopAll}
+              title="Stop all motors"
+            >
+              <FiStopCircle className="w-3.5 h-3.5" />
+            </button>
+          )}
         </>
       )}
 
@@ -200,6 +233,26 @@ export function MotorToolbar() {
       {/* Error */}
       {error && (
         <span className="text-red-400 text-[10px] ml-2">{error}</span>
+      )}
+
+      {/* Discovered motors chip badges */}
+      {discoveredMotors.length > 0 && (
+        <div className="w-full flex items-center gap-1.5 mt-1 pt-1 border-t border-zinc-800">
+          <span className="text-zinc-500 text-[10px] shrink-0">Motors:</span>
+          {discoveredMotors.map((m) => (
+            <button
+              key={m.id}
+              className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors ${
+                activeMotorId === m.id
+                  ? "bg-emerald-500/30 text-emerald-300 border border-emerald-500/50"
+                  : "bg-zinc-800 text-zinc-400 border border-zinc-700 hover:bg-zinc-700 hover:text-zinc-200"
+              }`}
+              onClick={() => handleSelectMotor(m.id)}
+            >
+              ID={m.id}{m.protocol === "mit" ? " (MIT)" : ""}
+            </button>
+          ))}
+        </div>
       )}
 
       {/* Diagnostic result */}

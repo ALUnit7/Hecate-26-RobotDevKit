@@ -19,8 +19,10 @@ export function MotorChart() {
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>("Angle");
   const chartRef = useRef<HTMLDivElement>(null);
   const uplotRef = useRef<uPlot | null>(null);
-  const history = useMotorStore((s) => s.history);
-  const timestamps = useMotorStore((s) => s.timestamps);
+  const activeMotorId = useMotorStore((s) => s.activeMotorId);
+  const motor = useMotorStore((s) => s.activeMotorId != null ? s.motors[s.activeMotorId] : null);
+  const history = motor?.history ?? [];
+  const timestamps = motor?.timestamps ?? [];
 
   const buildData = useCallback((): uPlot.AlignedData => {
     const cfg = TAB_CONFIG[activeTab];
@@ -83,9 +85,9 @@ export function MotorChart() {
       plot.destroy();
       uplotRef.current = null;
     };
-    // Recreate chart when tab changes
+    // Recreate chart when tab or active motor changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, activeMotorId]);
 
   // Update data without recreating chart
   useEffect(() => {

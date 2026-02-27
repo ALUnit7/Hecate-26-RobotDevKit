@@ -94,9 +94,10 @@ pub fn udp_connect(
     running.store(true, Ordering::SeqCst);
 
     let master_id = config.master_id;
+    let mit_scanning = Arc::clone(&state.mit_scanning);
 
     std::thread::spawn(move || {
-        udp_recv_thread(recv_socket, running, app, master_id);
+        udp_recv_thread(recv_socket, running, app, master_id, mit_scanning);
     });
 
     log::info!("UDP connected to {}", remote_addr);
@@ -109,6 +110,7 @@ fn udp_recv_thread(
     running: Arc<std::sync::atomic::AtomicBool>,
     app: AppHandle,
     master_id: u8,
+    mit_scanning: Arc<std::sync::atomic::AtomicBool>,
 ) {
     let mut buf = [0u8; 1024];
 
@@ -142,6 +144,10 @@ fn udp_recv_thread(
                         // Response command 1: mode=0, id=master_id
                         if mode == 0 && id_field == master_id {
                             let feedback = motor_protocol::decode_feedback(&data);
+                            // During MIT scan, emit scan result with MIT flag
+                            if mit_scanning.load(Ordering::SeqCst) {
+                                let _ = app.emit("motor-mit-scan-result", feedback.motor_id);
+                            }
                             let _ = app.emit("motor-feedback", &feedback);
                         }
                     } else if is_extended {
@@ -371,11 +377,10 @@ pub fn udp_send_batch(
 pub fn motor_enable(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
 ) -> Result<(), String> {
-    let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let can_id = motor_protocol::make_can_id(0, cfg.motor_id);
+    let can_id = motor_protocol::make_can_id(0, motor_id);
     let data = motor_protocol::cmd_enable();
-    drop(cfg);
     send_std_frame(&state, &app, can_id, &data)
 }
 
@@ -383,11 +388,10 @@ pub fn motor_enable(
 pub fn motor_stop(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
 ) -> Result<(), String> {
-    let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let can_id = motor_protocol::make_can_id(0, cfg.motor_id);
+    let can_id = motor_protocol::make_can_id(0, motor_id);
     let data = motor_protocol::cmd_stop();
-    drop(cfg);
     send_std_frame(&state, &app, can_id, &data)
 }
 
@@ -395,11 +399,10 @@ pub fn motor_stop(
 pub fn motor_set_zero(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
 ) -> Result<(), String> {
-    let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let can_id = motor_protocol::make_can_id(0, cfg.motor_id);
+    let can_id = motor_protocol::make_can_id(0, motor_id);
     let data = motor_protocol::cmd_set_zero();
-    drop(cfg);
     send_std_frame(&state, &app, can_id, &data)
 }
 
@@ -407,12 +410,11 @@ pub fn motor_set_zero(
 pub fn motor_set_mode(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
     mode: u8,
 ) -> Result<(), String> {
-    let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let can_id = motor_protocol::make_can_id(0, cfg.motor_id);
+    let can_id = motor_protocol::make_can_id(0, motor_id);
     let data = motor_protocol::cmd_set_mode(mode);
-    drop(cfg);
     send_std_frame(&state, &app, can_id, &data)
 }
 
@@ -420,11 +422,10 @@ pub fn motor_set_mode(
 pub fn motor_clear_fault(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
 ) -> Result<(), String> {
-    let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let can_id = motor_protocol::make_can_id(0, cfg.motor_id);
+    let can_id = motor_protocol::make_can_id(0, motor_id);
     let data = motor_protocol::cmd_clear_or_read_fault(0xFF);
-    drop(cfg);
     send_std_frame(&state, &app, can_id, &data)
 }
 
@@ -432,11 +433,10 @@ pub fn motor_clear_fault(
 pub fn motor_read_fault(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
 ) -> Result<(), String> {
-    let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let can_id = motor_protocol::make_can_id(0, cfg.motor_id);
+    let can_id = motor_protocol::make_can_id(0, motor_id);
     let data = motor_protocol::cmd_clear_or_read_fault(0x00);
-    drop(cfg);
     send_std_frame(&state, &app, can_id, &data)
 }
 
@@ -444,16 +444,15 @@ pub fn motor_read_fault(
 pub fn motor_mit_control(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
     position: f32,
     velocity: f32,
     kp: f32,
     kd: f32,
     torque: f32,
 ) -> Result<(), String> {
-    let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let can_id = motor_protocol::make_can_id(0, cfg.motor_id);
+    let can_id = motor_protocol::make_can_id(0, motor_id);
     let data = motor_protocol::cmd_mit_params(position, velocity, kp, kd, torque);
-    drop(cfg);
     send_std_frame(&state, &app, can_id, &data)
 }
 
@@ -461,13 +460,12 @@ pub fn motor_mit_control(
 pub fn motor_position_control(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
     target_position: f32,
     max_speed: f32,
 ) -> Result<(), String> {
-    let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let can_id = motor_protocol::make_can_id(1, cfg.motor_id);
+    let can_id = motor_protocol::make_can_id(1, motor_id);
     let data = motor_protocol::cmd_position(target_position, max_speed);
-    drop(cfg);
     send_std_frame(&state, &app, can_id, &data)
 }
 
@@ -475,13 +473,12 @@ pub fn motor_position_control(
 pub fn motor_speed_control(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
     target_speed: f32,
     current_limit: f32,
 ) -> Result<(), String> {
-    let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let can_id = motor_protocol::make_can_id(2, cfg.motor_id);
+    let can_id = motor_protocol::make_can_id(2, motor_id);
     let data = motor_protocol::cmd_speed(target_speed, current_limit);
-    drop(cfg);
     send_std_frame(&state, &app, can_id, &data)
 }
 
@@ -489,12 +486,11 @@ pub fn motor_speed_control(
 pub fn motor_change_id(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
     new_id: u8,
 ) -> Result<(), String> {
-    let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let can_id = motor_protocol::make_can_id(0, cfg.motor_id);
+    let can_id = motor_protocol::make_can_id(0, motor_id);
     let data = motor_protocol::cmd_change_motor_id(new_id);
-    drop(cfg);
     send_std_frame(&state, &app, can_id, &data)
 }
 
@@ -502,12 +498,11 @@ pub fn motor_change_id(
 pub fn motor_change_master_id(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
     new_master_id: u8,
 ) -> Result<(), String> {
-    let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let can_id = motor_protocol::make_can_id(0, cfg.motor_id);
+    let can_id = motor_protocol::make_can_id(0, motor_id);
     let data = motor_protocol::cmd_change_master_id(new_master_id);
-    drop(cfg);
     send_std_frame(&state, &app, can_id, &data)
 }
 
@@ -515,12 +510,11 @@ pub fn motor_change_master_id(
 pub fn motor_change_protocol(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
     protocol: u8,
 ) -> Result<(), String> {
-    let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let can_id = motor_protocol::make_can_id(0, cfg.motor_id);
+    let can_id = motor_protocol::make_can_id(0, motor_id);
     let data = motor_protocol::cmd_change_protocol(protocol);
-    drop(cfg);
     send_std_frame(&state, &app, can_id, &data)
 }
 
@@ -530,9 +524,10 @@ pub fn motor_change_protocol(
 pub fn priv_get_device_id(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
 ) -> Result<(), String> {
     let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let (ext_id, data) = motor_protocol::priv_cmd_get_device_id(cfg.master_id, cfg.motor_id);
+    let (ext_id, data) = motor_protocol::priv_cmd_get_device_id(cfg.master_id, motor_id);
     drop(cfg);
     send_ext_frame(&state, &app, ext_id, &data)
 }
@@ -541,9 +536,10 @@ pub fn priv_get_device_id(
 pub fn priv_enable(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
 ) -> Result<(), String> {
     let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let (ext_id, data) = motor_protocol::priv_cmd_enable(cfg.master_id, cfg.motor_id);
+    let (ext_id, data) = motor_protocol::priv_cmd_enable(cfg.master_id, motor_id);
     drop(cfg);
     send_ext_frame(&state, &app, ext_id, &data)
 }
@@ -552,10 +548,11 @@ pub fn priv_enable(
 pub fn priv_stop(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
     clear_fault: bool,
 ) -> Result<(), String> {
     let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let (ext_id, data) = motor_protocol::priv_cmd_stop(cfg.master_id, cfg.motor_id, clear_fault);
+    let (ext_id, data) = motor_protocol::priv_cmd_stop(cfg.master_id, motor_id, clear_fault);
     drop(cfg);
     send_ext_frame(&state, &app, ext_id, &data)
 }
@@ -564,9 +561,10 @@ pub fn priv_stop(
 pub fn priv_set_zero(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
 ) -> Result<(), String> {
     let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let (ext_id, data) = motor_protocol::priv_cmd_set_zero(cfg.master_id, cfg.motor_id);
+    let (ext_id, data) = motor_protocol::priv_cmd_set_zero(cfg.master_id, motor_id);
     drop(cfg);
     send_ext_frame(&state, &app, ext_id, &data)
 }
@@ -575,10 +573,11 @@ pub fn priv_set_zero(
 pub fn priv_set_can_id(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
     new_id: u8,
 ) -> Result<(), String> {
     let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let (ext_id, data) = motor_protocol::priv_cmd_set_can_id(cfg.master_id, cfg.motor_id, new_id);
+    let (ext_id, data) = motor_protocol::priv_cmd_set_can_id(cfg.master_id, motor_id, new_id);
     drop(cfg);
     send_ext_frame(&state, &app, ext_id, &data)
 }
@@ -587,10 +586,11 @@ pub fn priv_set_can_id(
 pub fn priv_param_read(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
     index: u16,
 ) -> Result<(), String> {
     let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let (ext_id, data) = motor_protocol::priv_cmd_param_read(cfg.master_id, cfg.motor_id, index);
+    let (ext_id, data) = motor_protocol::priv_cmd_param_read(cfg.master_id, motor_id, index);
     drop(cfg);
     send_ext_frame(&state, &app, ext_id, &data)
 }
@@ -599,13 +599,13 @@ pub fn priv_param_read(
 pub fn priv_param_write(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
     index: u16,
     param_type: String,
     value_f64: f64,
 ) -> Result<(), String> {
     let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
     let master_id = cfg.master_id;
-    let motor_id = cfg.motor_id;
     drop(cfg);
 
     let (ext_id, data) = match param_type.as_str() {
@@ -627,9 +627,10 @@ pub fn priv_param_write(
 pub fn priv_save_params(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
 ) -> Result<(), String> {
     let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let (ext_id, data) = motor_protocol::priv_cmd_save_params(cfg.master_id, cfg.motor_id);
+    let (ext_id, data) = motor_protocol::priv_cmd_save_params(cfg.master_id, motor_id);
     drop(cfg);
     send_ext_frame(&state, &app, ext_id, &data)
 }
@@ -638,10 +639,11 @@ pub fn priv_save_params(
 pub fn priv_change_baud(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
     baud_code: u8,
 ) -> Result<(), String> {
     let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let (ext_id, data) = motor_protocol::priv_cmd_change_baud(cfg.master_id, cfg.motor_id, baud_code);
+    let (ext_id, data) = motor_protocol::priv_cmd_change_baud(cfg.master_id, motor_id, baud_code);
     drop(cfg);
     send_ext_frame(&state, &app, ext_id, &data)
 }
@@ -650,10 +652,11 @@ pub fn priv_change_baud(
 pub fn priv_active_report(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
     enable: u8,
 ) -> Result<(), String> {
     let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let (ext_id, data) = motor_protocol::priv_cmd_active_report(cfg.master_id, cfg.motor_id, enable);
+    let (ext_id, data) = motor_protocol::priv_cmd_active_report(cfg.master_id, motor_id, enable);
     drop(cfg);
     send_ext_frame(&state, &app, ext_id, &data)
 }
@@ -662,10 +665,11 @@ pub fn priv_active_report(
 pub fn priv_change_protocol(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
     protocol: u8,
 ) -> Result<(), String> {
     let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let (ext_id, data) = motor_protocol::priv_cmd_change_protocol(cfg.master_id, cfg.motor_id, protocol);
+    let (ext_id, data) = motor_protocol::priv_cmd_change_protocol(cfg.master_id, motor_id, protocol);
     drop(cfg);
     send_ext_frame(&state, &app, ext_id, &data)
 }
@@ -674,9 +678,10 @@ pub fn priv_change_protocol(
 pub fn priv_read_version(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
 ) -> Result<(), String> {
     let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let (ext_id, data) = motor_protocol::priv_cmd_read_version(cfg.master_id, cfg.motor_id);
+    let (ext_id, data) = motor_protocol::priv_cmd_read_version(cfg.master_id, motor_id);
     drop(cfg);
     send_ext_frame(&state, &app, ext_id, &data)
 }
@@ -685,9 +690,10 @@ pub fn priv_read_version(
 pub fn priv_fault_feedback(
     app: AppHandle,
     state: tauri::State<'_, AppState>,
+    motor_id: u8,
 ) -> Result<(), String> {
     let cfg = state.udp_config.lock().map_err(|e| e.to_string())?;
-    let (ext_id, data) = motor_protocol::priv_cmd_fault_feedback(cfg.master_id, cfg.motor_id);
+    let (ext_id, data) = motor_protocol::priv_cmd_fault_feedback(cfg.master_id, motor_id);
     drop(cfg);
     send_ext_frame(&state, &app, ext_id, &data)
 }
@@ -719,8 +725,9 @@ pub fn udp_diagnose(
     ))
 }
 
-/// Scan for motors by sending get_device_id to all possible CAN IDs (0~127)
-/// Responses are handled by the recv thread and emitted as "motor-scan-result" events
+/// Scan for motors by sending get_device_id (private protocol) to all CAN IDs (0~127),
+/// then MIT enable commands to catch motors in MIT mode.
+/// Responses are emitted as "motor-scan-result" (private) and "motor-mit-scan-result" (MIT) events.
 #[tauri::command]
 pub fn udp_scan_motors(
     app: AppHandle,
@@ -733,6 +740,7 @@ pub fn udp_scan_motors(
     let sock_lock = state.udp_socket.lock().map_err(|e| e.to_string())?;
     let socket = sock_lock.as_ref().ok_or("UDP not connected")?;
 
+    // Phase 1: Private protocol scan (extended frame, type 0)
     for motor_id in 0..=127u8 {
         let (ext_id, data) = motor_protocol::priv_cmd_get_device_id(master_id, motor_id);
         let frame = motor_protocol::build_ext_can_frame(ext_id, &data);
@@ -747,8 +755,44 @@ pub fn udp_scan_motors(
         };
         let _ = app.emit("can-frame-log", &log_entry);
 
-        // Small delay between frames
         std::thread::sleep(Duration::from_millis(5));
+    }
+
+    // Wait for private protocol responses
+    std::thread::sleep(Duration::from_millis(200));
+
+    // Phase 2: MIT protocol scan (standard frame, enable command)
+    state.mit_scanning.store(true, Ordering::SeqCst);
+
+    for motor_id in 0..=127u8 {
+        let can_id = motor_protocol::make_can_id(0, motor_id);
+        let data = motor_protocol::cmd_enable();
+        let frame = motor_protocol::build_can_frame(can_id, &data);
+        let _ = socket.send(&frame);
+
+        let log_entry = CanFrameLog {
+            direction: "tx".to_string(),
+            can_id: can_id as u32,
+            is_extended: false,
+            data: data.to_vec(),
+            timestamp_ms: now_ms(),
+        };
+        let _ = app.emit("can-frame-log", &log_entry);
+
+        std::thread::sleep(Duration::from_millis(5));
+    }
+
+    // Wait for MIT responses
+    std::thread::sleep(Duration::from_millis(200));
+    state.mit_scanning.store(false, Ordering::SeqCst);
+
+    // Phase 3: Stop all motors that were enabled during MIT scan
+    for motor_id in 0..=127u8 {
+        let can_id = motor_protocol::make_can_id(0, motor_id);
+        let data = motor_protocol::cmd_stop();
+        let frame = motor_protocol::build_can_frame(can_id, &data);
+        let _ = socket.send(&frame);
+        std::thread::sleep(Duration::from_millis(2));
     }
 
     Ok(())
@@ -814,4 +858,199 @@ pub fn get_param_table() -> Vec<serde_json::Value> {
         }));
     }
     result
+}
+
+// ── Batch commands ───────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn motor_enable_all(
+    app: AppHandle,
+    state: tauri::State<'_, AppState>,
+    motor_ids: Vec<u8>,
+) -> Result<(), String> {
+    for &mid in &motor_ids {
+        let can_id = motor_protocol::make_can_id(0, mid);
+        let data = motor_protocol::cmd_enable();
+        send_std_frame(&state, &app, can_id, &data)?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn motor_stop_all(
+    app: AppHandle,
+    state: tauri::State<'_, AppState>,
+    motor_ids: Vec<u8>,
+) -> Result<(), String> {
+    for &mid in &motor_ids {
+        let can_id = motor_protocol::make_can_id(0, mid);
+        let data = motor_protocol::cmd_stop();
+        send_std_frame(&state, &app, can_id, &data)?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn motor_set_zero_all(
+    app: AppHandle,
+    state: tauri::State<'_, AppState>,
+    motor_ids: Vec<u8>,
+) -> Result<(), String> {
+    for &mid in &motor_ids {
+        let can_id = motor_protocol::make_can_id(0, mid);
+        let data = motor_protocol::cmd_set_zero();
+        send_std_frame(&state, &app, can_id, &data)?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn motor_set_mode_all(
+    app: AppHandle,
+    state: tauri::State<'_, AppState>,
+    motor_ids: Vec<u8>,
+    mode: u8,
+) -> Result<(), String> {
+    for &mid in &motor_ids {
+        let can_id = motor_protocol::make_can_id(0, mid);
+        let data = motor_protocol::cmd_set_mode(mode);
+        send_std_frame(&state, &app, can_id, &data)?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn motor_clear_fault_all(
+    app: AppHandle,
+    state: tauri::State<'_, AppState>,
+    motor_ids: Vec<u8>,
+) -> Result<(), String> {
+    for &mid in &motor_ids {
+        let can_id = motor_protocol::make_can_id(0, mid);
+        let data = motor_protocol::cmd_clear_or_read_fault(0xFF);
+        send_std_frame(&state, &app, can_id, &data)?;
+    }
+    Ok(())
+}
+
+// ── MIT high-frequency loop ─────────────────────────────────────────
+
+/// Start MIT high-frequency control loop thread
+#[tauri::command]
+pub fn udp_mit_loop_start(
+    app: AppHandle,
+    state: tauri::State<'_, AppState>,
+    motor_id: u8,
+    frequency: u32,
+) -> Result<(), String> {
+    if state.mit_loop_running.load(Ordering::SeqCst) {
+        return Err("MIT loop already running".to_string());
+    }
+
+    let sock_lock = state.udp_socket.lock().map_err(|e| e.to_string())?;
+    let socket = sock_lock.as_ref().ok_or("UDP not connected")?.try_clone()
+        .map_err(|e| format!("Failed to clone socket: {}", e))?;
+    drop(sock_lock);
+
+    // Initialize params
+    {
+        let mut params = state.mit_loop_params.lock().map_err(|e| e.to_string())?;
+        params.motor_id = motor_id;
+        params.freq_hz = frequency.max(1).min(2000);
+    }
+
+    let running = Arc::clone(&state.mit_loop_running);
+    running.store(true, Ordering::SeqCst);
+    let params = Arc::clone(&state.mit_loop_params);
+
+    std::thread::spawn(move || {
+        mit_loop_thread(socket, running, params, app);
+    });
+
+    log::info!("MIT loop started: motor_id={}, freq={}Hz", motor_id, frequency);
+    Ok(())
+}
+
+/// Update MIT loop parameters (called from frontend sliders)
+#[tauri::command]
+pub fn udp_mit_loop_update(
+    state: tauri::State<'_, AppState>,
+    position: f32,
+    velocity: f32,
+    kp: f32,
+    kd: f32,
+    torque: f32,
+) -> Result<(), String> {
+    let mut params = state.mit_loop_params.lock().map_err(|e| e.to_string())?;
+    params.position = position;
+    params.velocity = velocity;
+    params.kp = kp;
+    params.kd = kd;
+    params.torque = torque;
+    Ok(())
+}
+
+/// Stop MIT high-frequency control loop
+#[tauri::command]
+pub fn udp_mit_loop_stop(
+    state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+    state.mit_loop_running.store(false, Ordering::SeqCst);
+    log::info!("MIT loop stop requested");
+    Ok(())
+}
+
+/// MIT high-frequency loop thread
+fn mit_loop_thread(
+    socket: UdpSocket,
+    running: Arc<std::sync::atomic::AtomicBool>,
+    params: Arc<std::sync::Mutex<crate::state::MitLoopConfig>>,
+    app: AppHandle,
+) {
+    use std::time::Instant;
+
+    log::info!("MIT loop thread started");
+
+    while running.load(Ordering::SeqCst) {
+        let start = Instant::now();
+
+        let (motor_id, position, velocity, kp, kd, torque, freq_hz) = {
+            let p = params.lock().unwrap();
+            (p.motor_id, p.position, p.velocity, p.kp, p.kd, p.torque, p.freq_hz)
+        };
+
+        let can_id = motor_protocol::make_can_id(0, motor_id);
+        let data = motor_protocol::cmd_mit_params(position, velocity, kp, kd, torque);
+        let frame = motor_protocol::build_can_frame(can_id, &data);
+
+        if let Err(e) = socket.send(&frame) {
+            log::error!("MIT loop send error: {}", e);
+            // Don't log every failed frame to avoid flooding
+            if e.raw_os_error() != Some(10054) {
+                let _ = app.emit("udp-error", format!("MIT loop send error: {}", e));
+                break;
+            }
+        }
+
+        // Log TX frame (throttled: only log every 10th frame to avoid flooding CAN log)
+        // The recv thread handles RX logging for the feedback frames
+
+        let interval = Duration::from_micros(1_000_000 / freq_hz.max(1) as u64);
+        let elapsed = start.elapsed();
+        if elapsed < interval {
+            std::thread::sleep(interval - elapsed);
+        }
+    }
+
+    // Send stop command when loop exits
+    let can_id = {
+        let p = params.lock().unwrap();
+        motor_protocol::make_can_id(0, p.motor_id)
+    };
+    let stop_data = motor_protocol::cmd_stop();
+    let stop_frame = motor_protocol::build_can_frame(can_id, &stop_data);
+    let _ = socket.send(&stop_frame);
+
+    running.store(false, Ordering::SeqCst);
+    log::info!("MIT loop thread exited");
 }

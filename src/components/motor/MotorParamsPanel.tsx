@@ -6,15 +6,19 @@ import type { ParamDef } from "../../types/motor";
 export function MotorParamsPanel() {
   const connected = useMotorStore((s) => s.connected);
   const config = useMotorStore((s) => s.config);
+  const activeMotorId = useMotorStore((s) => s.activeMotorId);
   const paramTable = useMotorStore((s) => s.paramTable);
   const setParamTable = useMotorStore((s) => s.setParamTable);
-  const paramValues = useMotorStore((s) => s.paramValues);
+  const motor = useMotorStore((s) => s.activeMotorId != null ? s.motors[s.activeMotorId] : null);
   const clearParamValues = useMotorStore((s) => s.clearParamValues);
-  const faultStatus = useMotorStore((s) => s.faultStatus);
-  const deviceId = useMotorStore((s) => s.deviceId);
-  const deviceMotorId = useMotorStore((s) => s.deviceMotorId);
-  const firmwareVersion = useMotorStore((s) => s.firmwareVersion);
-  const privateFeedback = useMotorStore((s) => s.privateFeedback);
+
+  const paramValues = motor?.paramValues ?? {};
+  const faultStatus = motor?.faultStatus ?? null;
+  const deviceId = motor?.deviceId ?? null;
+  const firmwareVersion = motor?.firmwareVersion ?? null;
+  const privateFeedback = motor?.privateFeedback ?? null;
+
+  const motorId = activeMotorId ?? 127;
 
   const [activeTab, setActiveTab] = useState<"params" | "config" | "faults">("params");
   const [editValues, setEditValues] = useState<Record<number, string>>({});
@@ -31,11 +35,11 @@ export function MotorParamsPanel() {
   const readParam = useCallback(async (index: number) => {
     if (!connected) return;
     try {
-      await invoke("priv_param_read", { index });
+      await invoke("priv_param_read", { motorId, index });
     } catch (e) {
       console.error("param read failed:", e);
     }
-  }, [connected]);
+  }, [connected, motorId]);
 
   const readAllParams = useCallback(async () => {
     if (!connected) return;
@@ -43,14 +47,14 @@ export function MotorParamsPanel() {
     clearParamValues();
     for (const p of paramTable) {
       try {
-        await invoke("priv_param_read", { index: p.index });
-        await new Promise((r) => setTimeout(r, 20)); // Small delay between reads
+        await invoke("priv_param_read", { motorId, index: p.index });
+        await new Promise((r) => setTimeout(r, 20));
       } catch (e) {
         console.error("param read failed:", p.name, e);
       }
     }
     setReadingAll(false);
-  }, [connected, paramTable, clearParamValues]);
+  }, [connected, motorId, paramTable, clearParamValues]);
 
   const writeParam = useCallback(async (p: ParamDef) => {
     const strVal = editValues[p.index];
@@ -64,23 +68,22 @@ export function MotorParamsPanel() {
     const paramType = typeMap[p.paramType] || "f32";
 
     try {
-      await invoke("priv_param_write", { index: p.index, paramType, valueF64: val });
-      // Read back to confirm
+      await invoke("priv_param_write", { motorId, index: p.index, paramType, valueF64: val });
       await new Promise((r) => setTimeout(r, 20));
-      await invoke("priv_param_read", { index: p.index });
+      await invoke("priv_param_read", { motorId, index: p.index });
     } catch (e) {
       console.error("param write failed:", p.name, e);
     }
-  }, [editValues]);
+  }, [editValues, motorId]);
 
   const saveToFlash = useCallback(async () => {
     if (!connected) return;
     try {
-      await invoke("priv_save_params");
+      await invoke("priv_save_params", { motorId });
     } catch (e) {
       console.error("save params failed:", e);
     }
-  }, [connected]);
+  }, [connected, motorId]);
 
   const formatValue = (p: ParamDef, index: number) => {
     const v = paramValues[index];
@@ -293,7 +296,7 @@ export function MotorParamsPanel() {
                   disabled={!connected}
                   onClick={async () => {
                     try {
-                      await invoke("priv_change_protocol", { protocol: parseInt(protocolVal) });
+                      await invoke("priv_change_protocol", { motorId, protocol: parseInt(protocolVal) });
                     } catch (e) { console.error(e); }
                   }}
                 >
@@ -304,7 +307,7 @@ export function MotorParamsPanel() {
                   disabled={!connected}
                   onClick={async () => {
                     try {
-                      await invoke("motor_change_protocol", { protocol: parseInt(protocolVal) });
+                      await invoke("motor_change_protocol", { motorId, protocol: parseInt(protocolVal) });
                     } catch (e) { console.error(e); }
                   }}
                 >
@@ -335,7 +338,7 @@ export function MotorParamsPanel() {
                   disabled={!connected}
                   onClick={async () => {
                     try {
-                      await invoke("priv_change_baud", { baudCode: parseInt(baudVal) });
+                      await invoke("priv_change_baud", { motorId, baudCode: parseInt(baudVal) });
                     } catch (e) { console.error(e); }
                   }}
                 >
@@ -361,7 +364,7 @@ export function MotorParamsPanel() {
                   onClick={async () => {
                     try {
                       const enable = reportEnabled ? 0 : 1;
-                      await invoke("priv_active_report", { enable });
+                      await invoke("priv_active_report", { motorId, enable });
                       setReportEnabled(!reportEnabled);
                     } catch (e) { console.error(e); }
                   }}
@@ -379,7 +382,7 @@ export function MotorParamsPanel() {
                   className="px-2 py-1 text-[10px] bg-zinc-700 hover:bg-zinc-600 text-zinc-200 rounded disabled:opacity-40"
                   disabled={!connected}
                   onClick={async () => {
-                    try { await invoke("priv_get_device_id"); } catch (e) { console.error(e); }
+                    try { await invoke("priv_get_device_id", { motorId }); } catch (e) { console.error(e); }
                   }}
                 >
                   Get Device ID
@@ -388,7 +391,7 @@ export function MotorParamsPanel() {
                   className="px-2 py-1 text-[10px] bg-zinc-700 hover:bg-zinc-600 text-zinc-200 rounded disabled:opacity-40"
                   disabled={!connected}
                   onClick={async () => {
-                    try { await invoke("priv_read_version"); } catch (e) { console.error(e); }
+                    try { await invoke("priv_read_version", { motorId }); } catch (e) { console.error(e); }
                   }}
                 >
                   Read Version
@@ -400,8 +403,8 @@ export function MotorParamsPanel() {
                     <div className="text-zinc-300">
                       <span className="text-zinc-500">MCU ID: </span>
                       {deviceId}
-                      {deviceMotorId !== null && (
-                        <span className="text-zinc-500 ml-2">(Motor CAN ID: {deviceMotorId})</span>
+                      {activeMotorId !== null && (
+                        <span className="text-zinc-500 ml-2">(Motor CAN ID: {activeMotorId})</span>
                       )}
                     </div>
                   )}
@@ -439,10 +442,10 @@ export function MotorParamsPanel() {
                     if (isNaN(id) || id < 0 || id > 127) return;
                     setCanIdStatus("");
                     try {
-                      await invoke("priv_set_can_id", { newId: id });
+                      await invoke("priv_set_can_id", { motorId, newId: id });
                       setCanIdStatus("Set CAN ID sent. Saving to flash...");
                       await new Promise((r) => setTimeout(r, 50));
-                      await invoke("priv_save_params");
+                      await invoke("priv_save_params", { motorId });
                       // Sync backend config to the new motor ID
                       await invoke("udp_update_motor_ids", { motorId: id, masterId: config.master_id }).catch(() => {});
                       setCanIdStatus(`CAN ID → ${id} saved. Motor ID updated. Power cycle the motor to apply.`);
@@ -470,7 +473,7 @@ export function MotorParamsPanel() {
                 className="px-2 py-1 text-[10px] bg-blue-600 hover:bg-blue-500 text-white rounded disabled:opacity-40"
                 disabled={!connected}
                 onClick={async () => {
-                  try { await invoke("motor_read_fault"); } catch (e) { console.error(e); }
+                  try { await invoke("motor_read_fault", { motorId }); } catch (e) { console.error(e); }
                 }}
               >
                 Read Faults (MIT)
@@ -479,7 +482,7 @@ export function MotorParamsPanel() {
                 className="px-2 py-1 text-[10px] bg-blue-600 hover:bg-blue-500 text-white rounded disabled:opacity-40"
                 disabled={!connected}
                 onClick={async () => {
-                  try { await invoke("priv_fault_feedback"); } catch (e) { console.error(e); }
+                  try { await invoke("priv_fault_feedback", { motorId }); } catch (e) { console.error(e); }
                 }}
               >
                 Read Faults (Private)
@@ -488,7 +491,7 @@ export function MotorParamsPanel() {
                 className="px-2 py-1 text-[10px] bg-amber-600 hover:bg-amber-500 text-white rounded disabled:opacity-40"
                 disabled={!connected}
                 onClick={async () => {
-                  try { await invoke("motor_clear_fault"); } catch (e) { console.error(e); }
+                  try { await invoke("motor_clear_fault", { motorId }); } catch (e) { console.error(e); }
                 }}
               >
                 Clear Faults

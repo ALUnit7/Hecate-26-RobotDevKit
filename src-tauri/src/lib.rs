@@ -57,6 +57,16 @@ pub fn run() {
             udp::udp_diagnose,
             udp::udp_send_raw,
             udp::udp_scan_motors,
+            // Batch commands
+            udp::motor_enable_all,
+            udp::motor_stop_all,
+            udp::motor_set_zero_all,
+            udp::motor_set_mode_all,
+            udp::motor_clear_fault_all,
+            // MIT high-frequency loop
+            udp::udp_mit_loop_start,
+            udp::udp_mit_loop_update,
+            udp::udp_mit_loop_stop,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

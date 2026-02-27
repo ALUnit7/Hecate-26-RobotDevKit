@@ -1,7 +1,8 @@
 import { useMotorStore } from "../../stores/motor-store";
 
 export function MotorDashboard() {
-  const latest = useMotorStore((s) => s.latest);
+  const motor = useMotorStore((s) => s.activeMotorId != null ? s.motors[s.activeMotorId] : null);
+  const latest = motor?.feedback ?? null;
 
   const items = [
     {
