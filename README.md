@@ -1,10 +1,12 @@
 # Hecate-26 RobotDevKit (H26RDK)
 
-A cross-platform (Windows / Linux) robot debugging toolkit built with **Tauri v2 + React 19 + TypeScript + Rust**. Originally developed for **steering-wheel robots (舵轮机器人)**, it is designed to be a universal debugging suite for any motor-driven robot platform.
+**中文** | [English](./README.en.md)
 
-Currently features two core modules:
-- **IMU Debugging** — HiPNUC HI12 series 9-axis IMU real-time visualization
-- **Motor Debugging** — **LingZu (灵足时代) RS00** series CAN servo motor control & diagnostics
+跨平台 (Windows / Linux) 机器人调试工具套件，基于 **Tauri v2 + React 19 + TypeScript + Rust** 构建。最初为**舵轮机器人**开发，同时适用于任何电机驱动的机器人平台。
+
+目前包含两个核心模块：
+- **IMU 调试** — HiPNUC HI12 系列 9 轴 IMU 实时可视化
+- **电机调试** — **灵足时代 RS00** 系列 CAN 伺服电机控制与诊断
 
 ![Platform](https://img.shields.io/badge/platform-Windows%20|%20Linux-blue)
 ![Framework](https://img.shields.io/badge/framework-Tauri%20v2-orange)
@@ -13,95 +15,95 @@ Currently features two core modules:
 
 ---
 
-## Why H26RDK for RS00 Motor Debugging?
+## 为什么选择 H26RDK 调试 RS00 电机？
 
-Most CAN motor debugging tools require a **USB-CAN adapter (CAN 盒)** and vendor-specific Windows-only software. H26RDK takes a different approach:
+市面上大多数 CAN 电机调试工具需要 **USB-CAN 适配器 (CAN 盒)** 和厂商专用的 Windows 软件。H26RDK 采用了不同的方案：
 
-| Feature | H26RDK | Traditional Tools |
-|---------|--------|-------------------|
-| **CAN interface** | Ethernet gateway (Waveshare CAN-TO-ETH) — no driver install, plug-and-play | USB-CAN adapter — requires proprietary driver |
-| **Platform** | **Windows + Linux** | Windows only |
-| **CAN ID unknown?** | **Full-range scan (0~127)** — auto-detect and auto-connect | Must know CAN ID in advance |
-| **Protocol switching** | Switch between MIT ↔ Private protocol **without disconnecting** | Typically locked to one protocol mode |
-| **MIT + Private coexistence** | Send MIT commands while reading private protocol parameters — no conflict | Official upper computer may refuse connection under MIT mode |
-| **Set CAN ID remotely** | Change motor CAN ID via software, auto-save to Flash | Requires physical access or separate tool |
-| **Open source** | Fully open source, hackable | Closed source |
-
----
-
-## Screenshots
-
-### Home Page
-![Home Page](docs/homepage.png)
-
-### IMU Debugging
-![IMU Debugging](docs/screenshot.png)
-
-### Motor Type Selection
-![Motor Select](docs/motor-select.png)
-
-### RS00 Motor Debugging
-![RS00 Debug](docs/rs00-debug.png)
+| 特性 | H26RDK | 传统工具 |
+|------|--------|---------|
+| **CAN 接口** | 以太网网关 (Waveshare CAN-TO-ETH) — 免驱动，即插即用 | USB-CAN 适配器 — 需安装专有驱动 |
+| **平台支持** | **Windows + Linux** 双平台 | 仅 Windows |
+| **CAN ID 未知？** | **全范围扫描 (0~127)** — 自动发现并自动连接 | 必须预先知道 CAN ID |
+| **协议切换** | MIT ↔ 私有协议**无需断开连接**即可切换 | 通常锁定在单一协议模式 |
+| **MIT + 私有共存** | 在 MIT 控制的同时读取私有协议参数 — 互不冲突 | 官方上位机在 MIT 模式下可能拒绝连接 |
+| **远程修改 CAN ID** | 软件端修改电机 CAN ID，自动保存至 Flash | 需物理接触或单独工具 |
+| **开源** | 完全开源，可自由定制 | 闭源 |
 
 ---
 
-## Feature Overview
+## 界面截图
 
-### IMU Debugging Module
+### 首页
+![首页](docs/homepage.png)
 
-| Feature | Description |
-|---------|-------------|
-| Serial connection | Auto-enumerate ports, auto-detect CP210x (VID:10C4 PID:EA60), 4800~921600 baud |
-| Protocol parsing | Rust backend real-time HiPNUC binary protocol (HI91) decoding with CRC16 validation |
-| Data dashboard | Accelerometer, gyroscope, magnetometer, Euler angles, quaternion, temperature, pressure |
-| Real-time charts | uPlot high-performance scrolling curves — 4 switchable views |
-| 3D attitude | Three.js quaternion-driven visualization, ROS coordinate system (Z-up) |
-| AT command console | Send AT commands (LOG ENABLE/DISABLE, baud rate config, firmware query, etc.) |
+### IMU 调试
+![IMU 调试](docs/screenshot.png)
 
-### Motor Debugging Module (LingZu RS00)
+### 电机型号选择
+![电机选择](docs/motor-select.png)
 
-| Feature | Description |
-|---------|-------------|
-| **Gateway-based CAN** | Connect via Waveshare 2-CH CAN-TO-ETH gateway over UDP — no USB-CAN adapter needed |
-| **CAN ID auto-scan** | Scan full range (0~127), **auto-detect and auto-connect** to motors with unknown CAN IDs |
-| **MIT protocol** | Mixed position/velocity/torque control with Kp/Kd gains, real-time slider adjustment |
-| **Private protocol** | Position / Speed / Current(Torque) / Impedance / Position-Speed modes with auto-reporting |
-| **Protocol switching** | Switch between MIT and Private protocol modes on-the-fly without reconnecting |
-| **Real-time feedback** | Angle, velocity, torque waveform charts from motor feedback frames |
-| **CAN frame log** | Live TX/RX CAN frame inspector with pause and clear |
-| **Parameter management** | Read/write motor parameters (current limit, speed limit, PID, filter gain, acceleration, etc.) |
-| **Flash save/restore** | Save parameters to Flash, restore factory defaults |
-| **Remote CAN ID change** | Modify motor CAN ID via software with automatic Flash save and backend sync |
-| **Device diagnostics** | Read MCU Device ID (96-bit unique identifier) and firmware version |
+### RS00 电机调试
+![RS00 调试](docs/rs00-debug.png)
 
 ---
 
-## Quick Start
+## 功能概览
 
-### Pre-built Release (Windows)
+### IMU 调试模块
 
-1. Download the latest release from [Releases](https://github.com/ALUnit7/Hecate-26-RobotDevKit/releases)
-2. Run the `.exe` installer or portable executable
-3. **For IMU**: Install [CP210x USB-UART driver](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers)
-4. **For Motor**: Connect [Waveshare 2-CH CAN-TO-ETH](https://www.waveshare.com/2-ch-can-to-eth.htm) gateway to your network
-5. Windows 10 users: Install [WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) (pre-installed on Windows 11)
+| 功能 | 说明 |
+|------|------|
+| 串口连接 | 自动枚举串口，自动识别 CP210x (VID:10C4 PID:EA60)，支持 4800~921600 波特率 |
+| 协议解析 | Rust 后端实时解析 HiPNUC 二进制协议 (HI91)，CRC16 校验 |
+| 数据仪表盘 | 加速度、角速度、磁场、欧拉角、四元数、温度、气压实时数值显示 |
+| 实时图表 | uPlot 高性能滚动曲线 — 加速度/角速度/磁场/欧拉角四视图切换 |
+| 3D 姿态 | Three.js 四元数驱动姿态可视化，ROS 坐标系 (Z 轴朝上) |
+| AT 命令控制台 | 发送 AT 命令 (LOG ENABLE/DISABLE、波特率配置、固件查询等) |
 
-### Motor Quick Connect
+### 电机调试模块 (灵足时代 RS00)
 
-1. Power on the RS00 motor and connect it to the CAN-TO-ETH gateway
-2. Open H26RDK → Motor Debug → RS00
-3. Enter gateway IP (default `192.168.0.7`) and port (default `20001`)
-4. Click **Connect**
-5. **Don't know the motor's CAN ID?** Click the **Scan** button (🔍) — H26RDK scans all 128 addresses (0~127) and **automatically connects** to the first motor found
-6. Switch between MIT / Private protocol tabs and start controlling
+| 功能 | 说明 |
+|------|------|
+| **网关化 CAN 通信** | 通过 Waveshare 2-CH CAN-TO-ETH 网关以 UDP 透传 — 无需 USB-CAN 适配器 |
+| **CAN ID 自动扫描** | 全范围扫描 (0~127)，**自动发现并自动连接** CAN ID 未知的电机 |
+| **MIT 协议控制** | 位置/速度/力矩混合控制，Kp/Kd 增益实时滑块调节 |
+| **私有协议控制** | 位置 / 速度 / 电流(力矩) / 阻抗 / 位置-速度 多模式切换，支持自动上报 |
+| **协议自由切换** | MIT ↔ 私有协议模式在线切换，无需断开连接 |
+| **实时反馈图表** | 角度、速度、力矩三通道滚动波形图 |
+| **CAN 帧日志** | 实时 TX/RX CAN 帧查看器，支持暂停与清空 |
+| **参数管理** | 读写电机参数 (限流/限速/PID/滤波增益/加速度等) |
+| **Flash 保存/恢复** | 保存参数至 Flash、恢复出厂设置 |
+| **远程修改 CAN ID** | 软件端修改电机 CAN ID，自动保存 Flash 并同步后端配置 |
+| **设备诊断** | 读取 MCU Device ID (96-bit 唯一标识) 和固件版本号 |
 
 ---
 
-## Build from Source
+## 快速开始
+
+### 使用预编译版本 (Windows)
+
+1. 从 [Releases](https://github.com/ALUnit7/Hecate-26-RobotDevKit/releases) 下载最新版本
+2. 运行 `.exe` 安装包或直接运行便携版可执行文件
+3. **IMU 模块**: 安装 [CP210x USB-UART 驱动](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers)
+4. **电机模块**: 连接 [Waveshare 2-CH CAN-TO-ETH](https://www.waveshare.com/2-ch-can-to-eth.htm) 网关至局域网
+5. Windows 10 用户需安装 [WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) (Windows 11 已预装)
+
+### 电机快速连接
+
+1. 给 RS00 电机上电，连接至 CAN-TO-ETH 网关
+2. 打开 H26RDK → 电机调试 → RS00
+3. 输入网关 IP (默认 `192.168.0.7`) 和端口 (默认 `20001`)
+4. 点击 **Connect** 连接
+5. **不知道电机的 CAN ID？** 点击扫描按钮 (🔍) — H26RDK 扫描全部 128 个地址 (0~127)，**自动连接**发现的第一个电机
+6. 在 MIT / Private 协议标签页之间切换，开始控制
+
+---
+
+## 从源码构建
 
 ### Windows
 
-**Prerequisites:**
+**前置依赖：**
 
 ```powershell
 # 1. Node.js >= 20 LTS (https://nodejs.org/)
@@ -113,11 +115,11 @@ npm install -g pnpm
 # 3. Rust stable (https://rustup.rs/)
 rustc --version
 
-# 4. MSVC Build Tools — "Desktop development with C++" workload
+# 4. MSVC Build Tools — 勾选 "Desktop development with C++" 工作负载
 #    (https://visualstudio.microsoft.com/visual-cpp-build-tools/)
 ```
 
-**Build:**
+**构建：**
 
 ```powershell
 git clone https://github.com/ALUnit7/Hecate-26-RobotDevKit.git
@@ -126,14 +128,14 @@ pnpm install
 pnpm tauri build
 ```
 
-Output:
-- `src-tauri/target/release/hecate26-robot-devkit.exe`
-- `src-tauri/target/release/bundle/nsis/*-setup.exe` (NSIS installer)
-- `src-tauri/target/release/bundle/msi/*.msi` (MSI installer)
+构建产物：
+- `src-tauri/target/release/hecate26-robot-devkit.exe` — 可执行文件
+- `src-tauri/target/release/bundle/nsis/*-setup.exe` — NSIS 安装包
+- `src-tauri/target/release/bundle/msi/*.msi` — MSI 安装包
 
 ### Linux (Ubuntu / Debian)
 
-**1. Install system dependencies:**
+**1. 安装系统依赖：**
 
 ```bash
 sudo apt update
@@ -151,10 +153,10 @@ sudo apt install -y \
   pkg-config
 ```
 
-> `libudev-dev` — required by the `serialport` Rust crate
-> `libwebkit2gtk-4.1-dev` — Tauri v2 WebView backend on Linux
+> `libudev-dev` — `serialport` Rust crate 的必需依赖
+> `libwebkit2gtk-4.1-dev` — Tauri v2 在 Linux 上的 WebView 后端
 
-**2. Install Node.js (>= 20 LTS):**
+**2. 安装 Node.js (>= 20 LTS)：**
 
 ```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
@@ -163,20 +165,20 @@ nvm install 20
 nvm use 20
 ```
 
-**3. Install pnpm:**
+**3. 安装 pnpm：**
 
 ```bash
 npm install -g pnpm
 ```
 
-**4. Install Rust:**
+**4. 安装 Rust：**
 
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 source "$HOME/.cargo/env"
 ```
 
-**5. Clone and build:**
+**5. 克隆并构建：**
 
 ```bash
 git clone https://github.com/ALUnit7/Hecate-26-RobotDevKit.git
@@ -185,12 +187,12 @@ pnpm install
 pnpm tauri build
 ```
 
-Output (in `src-tauri/target/release/bundle/`):
-- `deb/*.deb` — Debian package
-- `appimage/*.AppImage` — Universal Linux executable
-- `rpm/*.rpm` — RPM package (if applicable)
+构建产物 (位于 `src-tauri/target/release/bundle/`)：
+- `deb/*.deb` — Debian 包
+- `appimage/*.AppImage` — 通用 Linux 可执行包
+- `rpm/*.rpm` — RPM 包 (如适用)
 
-**Dev mode** (hot-reload):
+**开发模式** (前端热重载 + Rust 自动重编译)：
 
 ```bash
 pnpm tauri dev
@@ -198,133 +200,133 @@ pnpm tauri dev
 
 ---
 
-## Architecture
+## 技术架构
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                     React 19 Frontend                        │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐ │
-│  │ HomePage │  │IMU Debug │  │Motor Sel │  │ RS00 Debug   │ │
-│  │ (router) │  │ (serial) │  │ (select) │  │ (UDP/CAN)    │ │
+│  │   首页   │  │IMU 调试  │  │电机选择  │  │ RS00 调试    │ │
+│  │ (路由)   │  │ (串口)   │  │ (选择)   │  │ (UDP/CAN)    │ │
 │  └──────────┘  └──────────┘  └──────────┘  └──────────────┘ │
-│               Zustand Store + 60fps RAF Throttle             │
+│               Zustand Store + 60fps RAF 节流                 │
 └──────────────────────────┬───────────────────────────────────┘
-                           │ Tauri IPC Events
+                           │ Tauri IPC 事件
 ┌──────────────────────────┴───────────────────────────────────┐
-│                       Rust Backend                           │
-│  serial.rs (USB-UART)    │  udp.rs (UDP → CAN gateway)      │
-│  ├─ list / open / close  │  ├─ connect / disconnect          │
-│  ├─ read thread          │  ├─ MIT / Private protocol        │
-│  └─ AT commands          │  ├─ param read / write / save     │
-│                          │  ├─ CAN ID scan (0~127)           │
-│  protocol.rs (HiPNUC)   │  └─ device ID / firmware query    │
+│                       Rust 后端                              │
+│  serial.rs (USB-UART)    │  udp.rs (UDP → CAN 网关)         │
+│  ├─ 枚举 / 打开 / 关闭  │  ├─ 连接 / 断开                  │
+│  ├─ 读取线程             │  ├─ MIT / 私有协议               │
+│  └─ AT 命令              │  ├─ 参数读写 / 保存              │
+│                          │  ├─ CAN ID 扫描 (0~127)          │
+│  protocol.rs (HiPNUC)   │  └─ Device ID / 固件版本查询     │
 │  ├─ CRC16-CCITT          │                                   │
-│  ├─ HI91 decode          │  motor_protocol.rs                │
-│  └─ state machine        │  ├─ MIT frame encode / decode     │
-│                          │  ├─ Private protocol frames       │
-│  state.rs                │  └─ parameter definitions         │
-│  └─ shared state         │                                   │
+│  ├─ HI91 解码            │  motor_protocol.rs               │
+│  └─ 状态机               │  ├─ MIT 帧编解码                 │
+│                          │  ├─ 私有协议帧                    │
+│  state.rs                │  └─ 参数定义表                    │
+│  └─ 共享状态             │                                   │
 └──────────────────────────┴───────────────────────────────────┘
         │                              │
   USB-UART (CP210x)         UDP (Waveshare CAN-TO-ETH)
         │                              │
-   [ HI12 IMU ]             [ LingZu RS00 Motor ]
+   [ HI12 IMU ]             [ 灵足时代 RS00 电机 ]
 ```
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| Desktop framework | Tauri v2 | Native window, Rust backend, IPC |
-| Frontend | React 19 + TypeScript | Component-based UI with routing |
-| Build tool | Vite 7 | Dev server + production build |
-| Styling | Tailwind CSS v4 | Atomic CSS, dark theme |
-| Charts | uPlot | High-performance real-time time-series |
-| 3D | Three.js + react-three-fiber | Quaternion-driven attitude visualization |
-| State | Zustand 5 | Lightweight reactive store |
-| Serial | Rust `serialport` crate | Native serial I/O |
-| Network | Rust `std::net::UdpSocket` | UDP transparent CAN frame relay |
+| 层级 | 技术 | 用途 |
+|------|------|------|
+| 桌面框架 | Tauri v2 | 原生窗口、Rust 后端、IPC 通信 |
+| 前端框架 | React 19 + TypeScript | 组件化 UI + 路由 (react-router-dom) |
+| 构建工具 | Vite 7 | 开发服务器 + 生产构建 |
+| 样式 | Tailwind CSS v4 | 原子化 CSS + 暗色主题 |
+| 图表 | uPlot | 高性能实时时序图 |
+| 3D | Three.js + react-three-fiber | 四元数姿态可视化 |
+| 状态管理 | Zustand 5 | 轻量级响应式状态 |
+| 串口 | Rust `serialport` crate | 原生串口 I/O |
+| 网络 | Rust `std::net::UdpSocket` | UDP 透传 CAN 帧 |
 
 ---
 
-## Development
+## 开发指南
 
 ```bash
-pnpm install          # Install dependencies
-pnpm tauri dev        # Dev mode (hot-reload)
-pnpm tauri build      # Production build
+pnpm install          # 安装依赖
+pnpm tauri dev        # 开发模式 (热重载)
+pnpm tauri build      # 生产构建
 
 cd src-tauri
-cargo test            # Run Rust unit tests (21 tests)
+cargo test            # 运行 Rust 单元测试 (21 个测试)
 ```
 
-### Project Structure
+### 项目结构
 
 ```
 src-tauri/src/
-├── main.rs              # Tauri entry point
-├── lib.rs               # Plugin + command registration
-├── protocol.rs          # HiPNUC protocol parser (CRC16, HI91, unit tests)
-├── serial.rs            # Serial port management
-├── state.rs             # Shared state
-├── udp.rs               # UDP/CAN communication (MIT + Private + params + diagnostics)
-└── motor_protocol.rs    # Motor protocol definitions (MIT/Private frames, param table)
+├── main.rs              # Tauri 入口
+├── lib.rs               # 插件 + 命令注册
+├── protocol.rs          # HiPNUC 协议解析 (CRC16, HI91, 单元测试)
+├── serial.rs            # 串口管理
+├── state.rs             # 共享状态
+├── udp.rs               # UDP/CAN 通信 (MIT + 私有协议 + 参数 + 诊断)
+└── motor_protocol.rs    # 电机协议定义 (MIT/私有帧, 参数表)
 
 src/
-├── main.tsx             # Router setup
-├── App.tsx              # Root layout + navbar
+├── main.tsx             # 路由配置
+├── App.tsx              # 根布局 + 导航栏
 ├── pages/
-│   ├── HomePage.tsx                     # Module selection home
-│   ├── imu-debug/ImuDebugPage.tsx       # IMU debugging page
+│   ├── HomePage.tsx                     # 模块选择首页
+│   ├── imu-debug/ImuDebugPage.tsx       # IMU 调试页
 │   └── motor-debug/
-│       ├── MotorSelectPage.tsx          # Motor type selection
-│       └── rs00/RS00DebugPage.tsx       # RS00 motor debugging page
+│       ├── MotorSelectPage.tsx          # 电机型号选择
+│       └── rs00/RS00DebugPage.tsx       # RS00 电机调试页
 ├── stores/
-│   ├── imu-store.ts                     # IMU state
-│   └── motor-store.ts                   # Motor state
+│   ├── imu-store.ts                     # IMU 状态管理
+│   └── motor-store.ts                   # 电机状态管理
 ├── hooks/
-│   ├── use-imu-data.ts                  # IMU event listener + 60fps throttle
-│   └── use-motor-data.ts               # Motor event listener + feedback
+│   ├── use-imu-data.ts                  # IMU 事件监听 + 60fps 节流
+│   └── use-motor-data.ts               # 电机事件监听 + 反馈处理
 ├── components/
-│   ├── layout/AppNavbar.tsx             # Top navigation bar
-│   ├── toolbar/ConnectionToolbar.tsx    # IMU serial toolbar
-│   ├── dashboard/DataDashboard.tsx      # IMU numeric dashboard
-│   ├── charts/RealtimeChart.tsx         # IMU real-time charts
-│   ├── viewer3d/AttitudeViewer.tsx      # 3D attitude viewer
-│   ├── console/CommandConsole.tsx       # AT command console
+│   ├── layout/AppNavbar.tsx             # 顶部导航栏
+│   ├── toolbar/ConnectionToolbar.tsx    # IMU 串口工具栏
+│   ├── dashboard/DataDashboard.tsx      # IMU 数值仪表盘
+│   ├── charts/RealtimeChart.tsx         # IMU 实时图表
+│   ├── viewer3d/AttitudeViewer.tsx      # 3D 姿态可视化
+│   ├── console/CommandConsole.tsx       # AT 命令控制台
 │   └── motor/
-│       ├── MotorToolbar.tsx             # Motor connection toolbar
-│       ├── MotorControlPanel.tsx        # MIT / Private control panel
-│       ├── MotorChart.tsx               # Motor feedback charts
-│       ├── MotorParamsPanel.tsx         # Parameter read/write panel
-│       └── MotorCanLog.tsx              # CAN frame log
+│       ├── MotorToolbar.tsx             # 电机连接工具栏
+│       ├── MotorControlPanel.tsx        # MIT / 私有协议控制面板
+│       ├── MotorChart.tsx               # 电机反馈图表
+│       ├── MotorParamsPanel.tsx         # 参数读写面板
+│       └── MotorCanLog.tsx              # CAN 帧日志
 └── types/
-    ├── imu.ts                           # IMU data types
-    └── motor.ts                         # Motor data types
+    ├── imu.ts                           # IMU 数据类型
+    └── motor.ts                         # 电机数据类型
 ```
 
 ---
 
-## Roadmap
+## 路线图
 
-### Coming Soon
+### 即将推出
 
-- [ ] **MIT high-frequency oscilloscope mode** — Continuous high-rate MIT command loop with real-time waveform capture, enabling oscilloscope-like motor response analysis (step response, frequency sweep, PID tuning visualization)
-- [ ] **Native protocol control** — Direct raw CAN frame composition and sending, enabling low-level motor register access and custom protocol experimentation
-- [ ] **Multi-motor control** — Simultaneous control of multiple motors on the same CAN bus with synchronized command dispatch
-- [ ] **Data recording & export** — Record motor feedback and IMU data to CSV/JSON for offline analysis (backend already implemented, UI integration pending)
+- [ ] **MIT 高频示波器模式** — 高速 MIT 命令循环 + 实时波形采集，实现示波器级别的电机响应分析 (阶跃响应、频率扫描、PID 调参可视化)
+- [ ] **原生协议控制** — 直接构造并发送原始 CAN 帧，支持底层寄存器访问和自定义协议实验
+- [ ] **多电机联控** — 同一 CAN 总线上多电机同步控制与协调调度
+- [ ] **数据录制与导出** — 录制电机反馈和 IMU 数据至 CSV/JSON 用于离线分析 (后端已实现，待 UI 接入)
 
-### Planned
+### 规划中
 
-- [ ] **Serial response display** — Route AT command ASCII responses back to console
-- [ ] **Disconnect detection** — USB unplug detection + auto-reconnect
-- [ ] **0x3xxx readonly parameters** — Full parameter read support pending RS00 firmware ≥ 0.0.3.5
-- [ ] **More motor types** — Extend motor debugging module to support additional CAN servo motors
-- [ ] **Data replay** — Import recorded CSV and replay on charts / 3D viewer
-- [ ] **Chart enhancements** — Pause/resume, Y-axis lock, hover tooltips, configurable time window
-- [ ] **macOS support** — Test and validate macOS build
-- [ ] **i18n** — Chinese / English interface toggle
+- [ ] **串口响应回显** — AT 命令 ASCII 响应显示至控制台
+- [ ] **断线重连** — USB 拔出检测 + 自动重连
+- [ ] **0x3xxx 只读参数** — 完整参数读取支持 (需 RS00 固件 ≥ 0.0.3.5)
+- [ ] **更多电机型号** — 扩展电机调试模块以支持更多 CAN 伺服电机
+- [ ] **数据回放** — 导入录制的 CSV 在图表 / 3D 视图中回放
+- [ ] **图表增强** — 暂停/恢复、Y 轴锁定、悬停提示、可配置时间窗口
+- [ ] **macOS 支持** — 测试并验证 macOS 构建
+- [ ] **国际化** — 中英文界面切换
 
 ---
 
-## License
+## 许可证
 
 MIT
