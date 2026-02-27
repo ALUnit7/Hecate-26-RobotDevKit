@@ -1,12 +1,12 @@
 [package]
-name = "imu-app"
-version = "0.1.0"
-description = "HI12 Series IMU Debugging Tool"
+name = "hecate26-robot-devkit"
+version = "1.0.0"
+description = "Hecate-26 RobotDevKit - Robot Development & Debugging Toolkit"
 authors = ["you"]
 edition = "2021"
 
 [lib]
-name = "imu_app_lib"
+name = "hecate26_robot_devkit_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

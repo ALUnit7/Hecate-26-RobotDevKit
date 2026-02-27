@@ -39,3 +39,8 @@ main.cpp
 .claude/
 CLAUDE.md
 Restore.md
+
+# Large reference docs (keep RS00_MOTOR_SPEC.md and screenshot.png)
+docs/*.pdf
+docs/*.html
+docs/*_files/

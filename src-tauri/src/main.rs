@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    imu_app_lib::run()
+    hecate26_robot_devkit_lib::run()
 }

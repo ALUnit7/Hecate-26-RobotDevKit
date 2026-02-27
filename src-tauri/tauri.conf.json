@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "HI12 IMU Debugger",
-  "version": "0.1.0",
-  "identifier": "com.hipnuc.hi12-imu-debugger",
+  "productName": "hecate26-robot-devkit",
+  "version": "1.0.0",
+  "identifier": "com.hecate26.robot-devkit",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "HI12 IMU Debugger",
+        "title": "Hecate-26 RobotDevKit",
         "width": 1280,
         "height": 800,
         "minWidth": 960,
