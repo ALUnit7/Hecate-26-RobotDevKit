@@ -33,17 +33,16 @@ Most CAN motor debugging tools require a **USB-CAN adapter (CAN 盒)** and vendo
 
 ## Screenshots
 
-### Home Page
-![Home Page](docs/homepage.png)
-
-### IMU Debugging
-![IMU Debugging](docs/screenshot.png)
-
-### Motor Type Selection
-![Motor Select](docs/motor-select.png)
-
-### RS00 Motor Debugging
-![RS00 Debug](docs/rs00-debug.png)
+<table>
+  <tr>
+    <td align="center"><strong>Home Page</strong><br><img src="docs/homepage.png" width="400"></td>
+    <td align="center"><strong>IMU Debugging</strong><br><img src="docs/screenshot.png" width="400"></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Motor Type Selection</strong><br><img src="docs/motor-select.png" width="400"></td>
+    <td align="center"><strong>RS00 Motor Debugging</strong><br><img src="docs/rs00-debug.png" width="400"></td>
+  </tr>
+</table>
 
 ---
 

@@ -33,17 +33,16 @@
 
 ## 界面截图
 
-### 首页
-![首页](docs/homepage.png)
-
-### IMU 调试
-![IMU 调试](docs/screenshot.png)
-
-### 电机型号选择
-![电机选择](docs/motor-select.png)
-
-### RS00 电机调试
-![RS00 调试](docs/rs00-debug.png)
+<table>
+  <tr>
+    <td align="center"><strong>首页</strong><br><img src="docs/homepage.png" width="400"></td>
+    <td align="center"><strong>IMU 调试</strong><br><img src="docs/screenshot.png" width="400"></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>电机型号选择</strong><br><img src="docs/motor-select.png" width="400"></td>
+    <td align="center"><strong>RS00 电机调试</strong><br><img src="docs/rs00-debug.png" width="400"></td>
+  </tr>
+</table>
 
 ---
 
