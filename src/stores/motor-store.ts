@@ -28,7 +28,7 @@ interface MotorState {
 
   // CAN frame log (global)
   canLog: CanFrameLog[];
-  pushCanLog: (entry: CanFrameLog) => void;
+  pushCanLogBatch: (entries: CanFrameLog[]) => void;
   clearCanLog: () => void;
 
   // Fault status (for active motor)
@@ -112,9 +112,9 @@ export const useMotorStore = create<MotorState>((set, get) => ({
     }),
 
   canLog: [],
-  pushCanLog: (entry) =>
+  pushCanLogBatch: (entries) =>
     set((s) => {
-      const canLog = [...s.canLog, entry];
+      const canLog = [...s.canLog, ...entries];
       if (canLog.length > MAX_LOG_LINES) {
         canLog.splice(0, canLog.length - MAX_LOG_LINES);
       }

@@ -112,7 +112,15 @@ fn udp_recv_thread(
     master_id: u8,
     mit_scanning: Arc<std::sync::atomic::AtomicBool>,
 ) {
+    use std::time::Instant;
+
     let mut buf = [0u8; 1024];
+
+    // Throttle can-frame-log: max 50 emits per 100ms window
+    const LOG_WINDOW_MS: u128 = 100;
+    const LOG_MAX_PER_WINDOW: u32 = 50;
+    let mut log_window_start = Instant::now();
+    let mut log_count: u32 = 0;
 
     while running.load(Ordering::SeqCst) {
         match socket.recv(&mut buf) {
@@ -126,15 +134,23 @@ fn udp_recv_thread(
                     let (frame_info, can_id, data) = motor_protocol::parse_can_frame(&frame_bytes);
                     let is_extended = motor_protocol::is_extended_data_frame(frame_info);
 
-                    // Log raw frame
-                    let log_entry = CanFrameLog {
-                        direction: "rx".to_string(),
-                        can_id,
-                        is_extended,
-                        data: data.to_vec(),
-                        timestamp_ms: now_ms(),
-                    };
-                    let _ = app.emit("can-frame-log", &log_entry);
+                    // Throttled CAN frame log — business parsing always runs regardless
+                    let elapsed = log_window_start.elapsed().as_millis();
+                    if elapsed >= LOG_WINDOW_MS {
+                        log_window_start = Instant::now();
+                        log_count = 0;
+                    }
+                    if log_count < LOG_MAX_PER_WINDOW {
+                        let log_entry = CanFrameLog {
+                            direction: "rx".to_string(),
+                            can_id,
+                            is_extended,
+                            data: data.to_vec(),
+                            timestamp_ms: now_ms(),
+                        };
+                        let _ = app.emit("can-frame-log", &log_entry);
+                        log_count += 1;
+                    }
 
                     if motor_protocol::is_standard_data_frame(frame_info) {
                         // MIT protocol standard frame response

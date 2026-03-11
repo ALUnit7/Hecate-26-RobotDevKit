@@ -5,7 +5,7 @@ import { useMotorStore } from "../stores/motor-store";
 
 export function useMotorData() {
   const pushFeedback = useMotorStore((s) => s.pushFeedback);
-  const pushCanLog = useMotorStore((s) => s.pushCanLog);
+  const pushCanLogBatch = useMotorStore((s) => s.pushCanLogBatch);
   const setFps = useMotorStore((s) => s.setFps);
   const setFaultStatus = useMotorStore((s) => s.setFaultStatus);
   const setParamValue = useMotorStore((s) => s.setParamValue);
@@ -15,6 +15,7 @@ export function useMotorData() {
   const setPrivateFeedback = useMotorStore((s) => s.setPrivateFeedback);
 
   const pendingFb = useRef<MotorFeedback | null>(null);
+  const pendingLogs = useRef<CanFrameLog[]>([]);
   const rafId = useRef<number>(0);
   const fpsInterval = useRef<ReturnType<typeof setInterval>>(undefined);
   const frameCountRef = useRef(0);
@@ -25,8 +26,9 @@ export function useMotorData() {
       frameCountRef.current++;
     });
 
+    // Batch CAN log entries — only flush in RAF tick
     const unlistenLog = listen<CanFrameLog>("can-frame-log", (event) => {
-      pushCanLog(event.payload);
+      pendingLogs.current.push(event.payload);
     });
 
     const unlistenFault = listen<FaultStatus>("motor-fault-status", (event) => {
@@ -53,11 +55,15 @@ export function useMotorData() {
       setPrivateFeedback(event.payload);
     });
 
-    // 60fps render loop
+    // 60fps render loop — flush feedback + CAN logs in batch
     const tick = () => {
       if (pendingFb.current) {
         pushFeedback(pendingFb.current);
         pendingFb.current = null;
+      }
+      if (pendingLogs.current.length > 0) {
+        pushCanLogBatch(pendingLogs.current);
+        pendingLogs.current = [];
       }
       rafId.current = requestAnimationFrame(tick);
     };
@@ -81,5 +87,5 @@ export function useMotorData() {
       cancelAnimationFrame(rafId.current);
       clearInterval(fpsInterval.current);
     };
-  }, [pushFeedback, pushCanLog, setFps, setFaultStatus, setParamValue, setUdpWarning, setDeviceInfo, setFirmwareVersion, setPrivateFeedback]);
+  }, [pushFeedback, pushCanLogBatch, setFps, setFaultStatus, setParamValue, setUdpWarning, setDeviceInfo, setFirmwareVersion, setPrivateFeedback]);
 }

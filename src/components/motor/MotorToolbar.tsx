@@ -133,12 +133,14 @@ export function MotorToolbar() {
         className="w-16 px-2 py-1 rounded bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs focus:outline-none focus:border-zinc-500"
         type="number"
         value={localConfig.gateway_port}
-        onChange={(e) =>
+        onChange={(e) => {
+          const port = parseInt(e.target.value) || 20001;
           setLocalConfig((c) => ({
             ...c,
-            gateway_port: parseInt(e.target.value) || 20001,
-          }))
-        }
+            gateway_port: port,
+            local_port: port,
+          }));
+        }}
         disabled={connected}
       />
 
