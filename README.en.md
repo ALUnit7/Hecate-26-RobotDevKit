@@ -11,7 +11,7 @@ Currently features two core modules:
 ![Platform](https://img.shields.io/badge/platform-Windows%20|%20Linux-blue)
 ![Framework](https://img.shields.io/badge/framework-Tauri%20v2-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Version](https://img.shields.io/badge/version-1.0.0-brightgreen)
+![Version](https://img.shields.io/badge/version-1.1.1-brightgreen)
 
 ---
 
@@ -306,11 +306,18 @@ src/
 
 ## Roadmap
 
+### Completed (v1.1.x)
+
+- [x] **MIT high-frequency control loop** — Dedicated Rust thread sending MIT commands at 50–2000Hz, frontend sliders update parameters in real-time
+- [x] **Multi-motor support** — Discover, switch, and independently manage multiple motors on the same CAN bus
+- [x] **Batch commands** — Enable All / Stop All / Set Zero All / Set Mode All / Clear Fault All
+- [x] **CAN log throttling** — Rust-side 500 frames/s cap + frontend RAF batch flush, no more UI freeze on busy bus
+- [x] **Port auto-sync** — Changing gateway port automatically syncs local bind port
+
 ### Coming Soon
 
-- [ ] **MIT high-frequency oscilloscope mode** — Continuous high-rate MIT command loop with real-time waveform capture, enabling oscilloscope-like motor response analysis (step response, frequency sweep, PID tuning visualization)
+- [ ] **MIT oscilloscope mode** — Step response, frequency sweep, PID tuning visualization
 - [ ] **Native protocol control** — Direct raw CAN frame composition and sending, enabling low-level motor register access and custom protocol experimentation
-- [ ] **Multi-motor control** — Simultaneous control of multiple motors on the same CAN bus with synchronized command dispatch
 - [ ] **Data recording & export** — Record motor feedback and IMU data to CSV/JSON for offline analysis (backend already implemented, UI integration pending)
 
 ### Planned

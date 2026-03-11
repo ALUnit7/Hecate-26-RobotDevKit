@@ -11,7 +11,7 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20|%20Linux-blue)
 ![Framework](https://img.shields.io/badge/framework-Tauri%20v2-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Version](https://img.shields.io/badge/version-1.0.0-brightgreen)
+![Version](https://img.shields.io/badge/version-1.1.1-brightgreen)
 
 ---
 
@@ -306,11 +306,18 @@ src/
 
 ## 路线图
 
+### 已完成 (v1.1.x)
+
+- [x] **MIT 高频控制循环** — 独立 Rust 线程以 50~2000Hz 发送 MIT 命令，前端滑块实时更新参数
+- [x] **多电机支持** — 同一 CAN 总线上多电机发现、切换与独立状态管理
+- [x] **批量命令** — 全部使能 / 全部停止 / 全部置零 / 全部设模式 / 全部清故障
+- [x] **CAN 日志节流** — Rust 端 500帧/s 限流 + 前端 RAF 批量刷新，繁忙总线不再卡顿
+- [x] **端口自动同步** — 修改网关端口时自动同步本地绑定端口
+
 ### 即将推出
 
-- [ ] **MIT 高频示波器模式** — 高速 MIT 命令循环 + 实时波形采集，实现示波器级别的电机响应分析 (阶跃响应、频率扫描、PID 调参可视化)
+- [ ] **MIT 示波器模式** — 阶跃响应、频率扫描、PID 调参可视化
 - [ ] **原生协议控制** — 直接构造并发送原始 CAN 帧，支持底层寄存器访问和自定义协议实验
-- [ ] **多电机联控** — 同一 CAN 总线上多电机同步控制与协调调度
 - [ ] **数据录制与导出** — 录制电机反馈和 IMU 数据至 CSV/JSON 用于离线分析 (后端已实现，待 UI 接入)
 
 ### 规划中
