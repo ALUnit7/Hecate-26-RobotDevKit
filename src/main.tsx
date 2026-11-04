@@ -6,6 +6,7 @@ import { HomePage } from "./pages/HomePage";
 import { ImuDebugPage } from "./pages/imu-debug/ImuDebugPage";
 import { MotorSelectPage } from "./pages/motor-debug/MotorSelectPage";
 import { RS00DebugPage } from "./pages/motor-debug/rs00/RS00DebugPage";
+import { RemoteDebugPage } from "./pages/remote-debug/RemoteDebugPage";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
@@ -16,6 +17,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
           <Route path="imu-debug" element={<ImuDebugPage />} />
           <Route path="motor-debug" element={<MotorSelectPage />} />
           <Route path="motor-debug/rs00" element={<RS00DebugPage />} />
+          <Route path="remote-debug" element={<RemoteDebugPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

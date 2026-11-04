@@ -60,6 +60,12 @@ pub struct AppState {
     pub mit_loop_running: Arc<AtomicBool>,
     /// Shared MIT loop parameters (updated from frontend sliders)
     pub mit_loop_params: Arc<Mutex<MitLoopConfig>>,
+
+    // ── Serial / SBUS remote ──
+    /// Currently open SBUS serial port (None if disconnected)
+    pub sbus_port: Mutex<Option<Box<dyn serialport::SerialPort>>>,
+    /// Flag to signal the SBUS read thread to stop
+    pub sbus_running: Arc<AtomicBool>,
 }
 
 impl AppState {
@@ -78,6 +84,9 @@ impl AppState {
 
             mit_loop_running: Arc::new(AtomicBool::new(false)),
             mit_loop_params: Arc::new(Mutex::new(MitLoopConfig::default())),
+
+            sbus_port: Mutex::new(None),
+            sbus_running: Arc::new(AtomicBool::new(false)),
         }
     }
 }

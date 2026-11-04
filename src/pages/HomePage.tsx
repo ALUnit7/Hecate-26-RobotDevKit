@@ -6,6 +6,7 @@ import {
   FiActivity,
   FiWifi,
   FiTool,
+  FiRadio,
 } from "react-icons/fi";
 
 interface ToolCard {
@@ -31,6 +32,14 @@ const tools: ToolCard[] = [
       "Motor debugging via CAN-ETH gateway. Supports RS00 (RobStride) MIT protocol with real-time feedback, charts, and CAN frame logging.",
     icon: <FiSettings className="w-7 h-7" />,
     path: "/motor-debug",
+    status: "ready",
+  },
+  {
+    title: "Remote Debugger",
+    description:
+      "SBUS RC receiver channel visualization. Real-time 16-channel bars, digital CH17/18, frame-lost & failsafe status. Supports SBUS @ 100k/115.2k baud.",
+    icon: <FiRadio className="w-7 h-7" />,
+    path: "/remote-debug",
     status: "ready",
   },
   {
@@ -132,7 +141,7 @@ export function HomePage() {
 
       {/* Footer */}
       <div className="max-w-5xl mx-auto mt-10 text-center text-xs text-zinc-600">
-        H26RDK v0.2.0
+        H26RDK v1.2.0
       </div>
     </div>
   );

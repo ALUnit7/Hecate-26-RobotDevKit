@@ -1,6 +1,7 @@
 #[allow(dead_code)]
 mod motor_protocol;
 mod protocol;
+mod sbus;
 mod serial;
 mod state;
 mod udp;
@@ -67,6 +68,9 @@ pub fn run() {
             udp::udp_mit_loop_start,
             udp::udp_mit_loop_update,
             udp::udp_mit_loop_stop,
+            // SBUS remote receiver
+            sbus::sbus_open_port,
+            sbus::sbus_close_port,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

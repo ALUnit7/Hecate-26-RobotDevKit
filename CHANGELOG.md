@@ -5,6 +5,28 @@ All notable changes to Hecate-26 RobotDevKit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-11-04
+
+### Added
+- **SBUS Remote Debugger**: Real-time visualization of SBUS RC receiver channel data
+  - 16-channel horizontal bars with center marker and raw value readout
+  - Digital channels CH17/CH18 status indicators
+  - Frame-lost & failsafe status badges
+  - Live stats: bytes received, valid frames, invalid frames, lost frames
+  - Signal-loss detection (>500ms without frames)
+  - Stick channels (CH1-4) highlighted in sky blue, auxiliary channels in emerald
+
+### Technical
+- New Rust backend module `sbus.rs`: byte-stream SBUS decoder, background read thread, Tauri commands `sbus_open_port` / `sbus_close_port`
+- Port opened in 8N2 mode (matches NCAS reference config), configurable baud (100000/115200/200000)
+- Frame sync trusts 0x0F header + fixed 25-byte stride (no footer validation — many receivers use non-zero end byte)
+- Frontend: `use-sbus-data` hook, `sbus-store` (Zustand), `RemoteDebugPage`
+- Route `/remote-debug` added, tool card on HomePage
+
+### Changed
+- Channel range normalized to 0–2047 (mid 1024) to match C++ reference implementation
+- Version bumped to 1.2.0 (Cargo.toml, tauri.conf.json, HomePage footer)
+
 ## [1.1.1] - 2026-03-12
 
 ### Fixed
@@ -94,6 +116,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frontend: Tailwind CSS v4, React 19, TypeScript
 - Build system: Vite 7, Tauri CLI 2
 
+[1.2.0]: https://github.com/ALUnit7/Hecate-26-RobotDevKit/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/ALUnit7/Hecate-26-RobotDevKit/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/ALUnit7/Hecate-26-RobotDevKit/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/ALUnit7/Hecate-26-RobotDevKit/compare/v0.2.0...v1.0.0
