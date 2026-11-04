@@ -4,14 +4,15 @@
 
 跨平台 (Windows / Linux) 机器人调试工具套件，基于 **Tauri v2 + React 19 + TypeScript + Rust** 构建。最初为**舵轮机器人**开发，同时适用于任何电机驱动的机器人平台。
 
-目前包含两个核心模块：
+目前包含三个核心模块：
 - **IMU 调试** — HiPNUC HI12 系列 9 轴 IMU 实时可视化
 - **电机调试** — **灵足时代 RS00** 系列 CAN 伺服电机控制与诊断
+- **遥控器调试** — SBUS 接收机 16 通道实时可视化
 
 ![Platform](https://img.shields.io/badge/platform-Windows%20|%20Linux-blue)
 ![Framework](https://img.shields.io/badge/framework-Tauri%20v2-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Version](https://img.shields.io/badge/version-1.1.1-brightgreen)
+![Version](https://img.shields.io/badge/version-1.2.0-brightgreen)
 
 ---
 
@@ -75,9 +76,19 @@
 | **远程修改 CAN ID** | 软件端修改电机 CAN ID，自动保存 Flash 并同步后端配置 |
 | **设备诊断** | 读取 MCU Device ID (96-bit 唯一标识) 和固件版本号 |
 
----
+### 遥控器调试模块 (SBUS)
 
-## 快速开始
+| 功能 | 说明 |
+|------|------|
+| **16 通道实时可视化** | 横向进度条显示各通道当前值 (0~2047，中值 1024) |
+| **摇杆通道标注** | CH1-4 (摇杆) 天蓝色高亮显示，CH5-16 翠绿色 |
+| **数字通道** | CH17 / CH18 开关状态指示灯 |
+| **状态徽章** | FRAME LOST (信号降质) / FAILSAFE (遥控器信号丢失) 实时告警 |
+| **诊断统计** | 实时显示接收字节数、有效帧数、无效帧数、丢帧数 |
+| **信号丢失检测** | 超过 500ms 无帧时提示 Signal Lost |
+| **波特率可选** | 支持 100000 / 115200 / 200000 baud，适配不同 SBUS 转换器 |
+
+---
 
 ### 使用预编译版本 (Windows)
 
@@ -85,7 +96,8 @@
 2. 运行 `.exe` 安装包或直接运行便携版可执行文件
 3. **IMU 模块**: 安装 [CP210x USB-UART 驱动](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers)
 4. **电机模块**: 连接 [Waveshare 2-CH CAN-TO-ETH](https://www.waveshare.com/2-ch-can-to-eth.htm) 网关至局域网
-5. Windows 10 用户需安装 [WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) (Windows 11 已预装)
+5. **遥控器模块**: 将 SBUS 信号接至反相器后连接 USB-UART 转换器 (CP210x 等)
+6. Windows 10 用户需安装 [WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) (Windows 11 已预装)
 
 ### 电机快速连接
 
@@ -202,34 +214,36 @@ pnpm tauri dev
 ## 技术架构
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                     React 19 Frontend                        │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐ │
-│  │   首页   │  │IMU 调试  │  │电机选择  │  │ RS00 调试    │ │
-│  │ (路由)   │  │ (串口)   │  │ (选择)   │  │ (UDP/CAN)    │ │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────────┘ │
-│               Zustand Store + 60fps RAF 节流                 │
-└──────────────────────────┬───────────────────────────────────┘
-                           │ Tauri IPC 事件
-┌──────────────────────────┴───────────────────────────────────┐
-│                       Rust 后端                              │
-│  serial.rs (USB-UART)    │  udp.rs (UDP → CAN 网关)         │
-│  ├─ 枚举 / 打开 / 关闭  │  ├─ 连接 / 断开                  │
-│  ├─ 读取线程             │  ├─ MIT / 私有协议               │
-│  └─ AT 命令              │  ├─ 参数读写 / 保存              │
-│                          │  ├─ CAN ID 扫描 (0~127)          │
-│  protocol.rs (HiPNUC)   │  └─ Device ID / 固件版本查询     │
-│  ├─ CRC16-CCITT          │                                   │
-│  ├─ HI91 解码            │  motor_protocol.rs               │
-│  └─ 状态机               │  ├─ MIT 帧编解码                 │
-│                          │  ├─ 私有协议帧                    │
-│  state.rs                │  └─ 参数定义表                    │
-│  └─ 共享状态             │                                   │
-└──────────────────────────┴───────────────────────────────────┘
-        │                              │
-  USB-UART (CP210x)         UDP (Waveshare CAN-TO-ETH)
-        │                              │
-   [ HI12 IMU ]             [ 灵足时代 RS00 电机 ]
+┌─────────────────────────────────────────────────────────────────────┐
+│                        React 19 Frontend                            │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌───────┐  ┌────────┐  │
+│  │   首页   │  │IMU 调试  │  │电机选择  │  │RS00   │  │遥控器  │  │
+│  │ (路由)   │  │ (串口)   │  │ (选择)   │  │调试   │  │调试    │  │
+│  └──────────┘  └──────────┘  └──────────┘  └───────┘  └────────┘  │
+│                    Zustand Store + 60fps RAF 节流                   │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │ Tauri IPC 事件
+┌──────────────────────────────┴──────────────────────────────────────┐
+│                           Rust 后端                                  │
+│  serial.rs (USB-UART)    │  udp.rs (UDP → CAN 网关)                 │
+│  ├─ 枚举 / 打开 / 关闭  │  ├─ 连接 / 断开                          │
+│  ├─ 读取线程             │  ├─ MIT / 私有协议                       │
+│  └─ AT 命令              │  ├─ 参数读写 / 保存                      │
+│                          │  ├─ CAN ID 扫描 (0~127)                  │
+│  protocol.rs (HiPNUC)   │  └─ Device ID / 固件版本查询             │
+│  ├─ CRC16-CCITT          │                                           │
+│  ├─ HI91 解码            │  motor_protocol.rs                       │
+│  └─ 状态机               │  └─ MIT/私有帧 + 参数定义表              │
+│                          │                                           │
+│  sbus.rs (SBUS 接收机)  │  state.rs                                │
+│  ├─ 25字节帧解码         │  └─ 共享状态                             │
+│  ├─ 16ch × 11bit 拆包   │                                           │
+│  └─ 读取线程 + 统计      │                                           │
+└──────────────────────────┴──────────────────────────────────────────┘
+        │                       │                    │
+  USB-UART (CP210x)    UDP (Waveshare CAN-TO-ETH)  USB-UART + 反相器
+        │                       │                    │
+   [ HI12 IMU ]        [ 灵足时代 RS00 电机 ]   [ SBUS 接收机 ]
 ```
 
 | 层级 | 技术 | 用途 |
@@ -264,7 +278,8 @@ src-tauri/src/
 ├── main.rs              # Tauri 入口
 ├── lib.rs               # 插件 + 命令注册
 ├── protocol.rs          # HiPNUC 协议解析 (CRC16, HI91, 单元测试)
-├── serial.rs            # 串口管理
+├── serial.rs            # 串口管理 (IMU)
+├── sbus.rs              # SBUS 接收机解码 + 串口读取线程
 ├── state.rs             # 共享状态
 ├── udp.rs               # UDP/CAN 通信 (MIT + 私有协议 + 参数 + 诊断)
 └── motor_protocol.rs    # 电机协议定义 (MIT/私有帧, 参数表)
@@ -273,17 +288,20 @@ src/
 ├── main.tsx             # 路由配置
 ├── App.tsx              # 根布局 + 导航栏
 ├── pages/
-│   ├── HomePage.tsx                     # 模块选择首页
-│   ├── imu-debug/ImuDebugPage.tsx       # IMU 调试页
-│   └── motor-debug/
-│       ├── MotorSelectPage.tsx          # 电机型号选择
-│       └── rs00/RS00DebugPage.tsx       # RS00 电机调试页
+│   ├── HomePage.tsx                              # 模块选择首页
+│   ├── imu-debug/ImuDebugPage.tsx               # IMU 调试页
+│   ├── motor-debug/
+│   │   ├── MotorSelectPage.tsx                  # 电机型号选择
+│   │   └── rs00/RS00DebugPage.tsx               # RS00 电机调试页
+│   └── remote-debug/RemoteDebugPage.tsx         # 遥控器调试页
 ├── stores/
 │   ├── imu-store.ts                     # IMU 状态管理
-│   └── motor-store.ts                   # 电机状态管理
+│   ├── motor-store.ts                   # 电机状态管理
+│   └── sbus-store.ts                    # SBUS 状态管理
 ├── hooks/
 │   ├── use-imu-data.ts                  # IMU 事件监听 + 60fps 节流
-│   └── use-motor-data.ts               # 电机事件监听 + 反馈处理
+│   ├── use-motor-data.ts                # 电机事件监听 + 反馈处理
+│   └── use-sbus-data.ts                 # SBUS 事件监听
 ├── components/
 │   ├── layout/AppNavbar.tsx             # 顶部导航栏
 │   ├── toolbar/ConnectionToolbar.tsx    # IMU 串口工具栏
@@ -299,12 +317,17 @@ src/
 │       └── MotorCanLog.tsx              # CAN 帧日志
 └── types/
     ├── imu.ts                           # IMU 数据类型
-    └── motor.ts                         # 电机数据类型
+    ├── motor.ts                         # 电机数据类型
+    └── sbus.ts                          # SBUS 数据类型
 ```
 
 ---
 
 ## 路线图
+
+### 已完成 (v1.2.0)
+
+- [x] **SBUS 遥控器调试** — 16 通道实时可视化，CH17/18 数字通道，FAILSAFE/FRAME LOST 告警，诊断统计
 
 ### 已完成 (v1.1.x)
 

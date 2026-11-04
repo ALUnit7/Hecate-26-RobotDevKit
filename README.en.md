@@ -4,14 +4,15 @@
 
 A cross-platform (Windows / Linux) robot debugging toolkit built with **Tauri v2 + React 19 + TypeScript + Rust**. Originally developed for **steering-wheel robots (舵轮机器人)**, it is designed to be a universal debugging suite for any motor-driven robot platform.
 
-Currently features two core modules:
+Currently features three core modules:
 - **IMU Debugging** — HiPNUC HI12 series 9-axis IMU real-time visualization
 - **Motor Debugging** — **LingZu (灵足时代) RS00** series CAN servo motor control & diagnostics
+- **Remote Debugger** — SBUS RC receiver 16-channel real-time visualization
 
 ![Platform](https://img.shields.io/badge/platform-Windows%20|%20Linux-blue)
 ![Framework](https://img.shields.io/badge/framework-Tauri%20v2-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Version](https://img.shields.io/badge/version-1.1.1-brightgreen)
+![Version](https://img.shields.io/badge/version-1.2.0-brightgreen)
 
 ---
 
@@ -75,6 +76,18 @@ Most CAN motor debugging tools require a **USB-CAN adapter (CAN 盒)** and vendo
 | **Remote CAN ID change** | Modify motor CAN ID via software with automatic Flash save and backend sync |
 | **Device diagnostics** | Read MCU Device ID (96-bit unique identifier) and firmware version |
 
+### Remote Debugger Module (SBUS)
+
+| Feature | Description |
+|---------|-------------|
+| **16-channel visualization** | Horizontal bars showing each channel's live value (0~2047, mid 1024) |
+| **Stick highlighting** | CH1-4 (sticks) highlighted in sky blue, CH5-16 in emerald |
+| **Digital channels** | CH17 / CH18 on/off status indicators |
+| **Status badges** | FRAME LOST (signal degradation) / FAILSAFE (transmitter lost) live alerts |
+| **Diagnostics stats** | Live byte count, valid frames, invalid frames, lost frames |
+| **Signal loss detection** | Prompts Signal Lost when no frames arrive for >500ms |
+| **Configurable baud** | Supports 100000 / 115200 / 200000 baud for different SBUS converters |
+
 ---
 
 ## Quick Start
@@ -85,7 +98,8 @@ Most CAN motor debugging tools require a **USB-CAN adapter (CAN 盒)** and vendo
 2. Run the `.exe` installer or portable executable
 3. **For IMU**: Install [CP210x USB-UART driver](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers)
 4. **For Motor**: Connect [Waveshare 2-CH CAN-TO-ETH](https://www.waveshare.com/2-ch-can-to-eth.htm) gateway to your network
-5. Windows 10 users: Install [WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) (pre-installed on Windows 11)
+5. **For Remote**: Connect SBUS signal through an inverter to a USB-UART converter (e.g. CP210x)
+6. Windows 10 users: Install [WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) (pre-installed on Windows 11)
 
 ### Motor Quick Connect
 
@@ -299,12 +313,17 @@ src/
 │       └── MotorCanLog.tsx              # CAN frame log
 └── types/
     ├── imu.ts                           # IMU data types
-    └── motor.ts                         # Motor data types
+    ├── motor.ts                         # Motor data types
+    └── sbus.ts                          # SBUS data types
 ```
 
 ---
 
 ## Roadmap
+
+### Completed (v1.2.0)
+
+- [x] **SBUS Remote Debugger** — 16-channel real-time visualization, CH17/18 digital indicators, FAILSAFE/FRAME LOST alerts, diagnostic stats
 
 ### Completed (v1.1.x)
 
