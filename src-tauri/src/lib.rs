@@ -1,5 +1,6 @@
 #[allow(dead_code)]
 mod motor_protocol;
+mod presets;
 mod protocol;
 mod sbus;
 mod serial;
@@ -71,6 +72,9 @@ pub fn run() {
             // SBUS remote receiver
             sbus::sbus_open_port,
             sbus::sbus_close_port,
+            // SBUS presets (persist to app data dir)
+            presets::sbus_load_presets,
+            presets::sbus_save_presets,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

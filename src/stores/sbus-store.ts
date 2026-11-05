@@ -2,7 +2,7 @@ import { create } from "zustand";
 import type { SbusData, SbusStats } from "../types/sbus";
 import { CHANNEL_MID } from "../types/sbus";
 
-const DEFAULT_CHANNELS = (): number[] => Array(16).fill(CHANNEL_MID); // 1024 = mid
+const DEFAULT_CHANNELS = (): number[] => Array(16).fill(CHANNEL_MID); // 992 = mid (standard SBUS)
 
 const DEFAULT_DATA: SbusData = {
   channels: DEFAULT_CHANNELS(),
