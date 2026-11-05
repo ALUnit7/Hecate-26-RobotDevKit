@@ -1,6 +1,7 @@
 import { useSbusStore } from "../../stores/sbus-store";
 import { usePresetStore } from "../../stores/preset-store";
 import { CHANNEL_MID, CHANNEL_MIN, CHANNEL_MAX } from "../../types/sbus";
+import { useI18n } from "../../i18n";
 
 /** Normalize a raw 172–1811 channel value to -1..+1 (center 992 → 0) */
 function toSigned(raw: number): number {
@@ -9,7 +10,7 @@ function toSigned(raw: number): number {
 }
 
 interface StickProps {
-  /** Display label, e.g. "左摇杆" */
+  /** Display label, e.g. "Left Stick" */
   label: string;
   /** Raw value of the X channel (172–1811, mid 992) */
   xRaw: number;
@@ -20,9 +21,11 @@ interface StickProps {
   yControl: string;
   /** Whether both channels are mapped */
   available: boolean;
+  /** i18n string for "unmapped" label */
+  unmappedLabel: string;
 }
 
-function Stick({ label, xRaw, yRaw, xControl, yControl, available }: StickProps) {
+function Stick({ label, xRaw, yRaw, xControl, yControl, available, unmappedLabel }: StickProps) {
   const x = toSigned(xRaw); // -1 (left) .. +1 (right)
   const y = toSigned(yRaw); // -1 (down) .. +1 (up)
 
@@ -47,7 +50,7 @@ function Stick({ label, xRaw, yRaw, xControl, yControl, available }: StickProps)
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-[9px] text-zinc-600">未映射</span>
+            <span className="text-[9px] text-zinc-600">{unmappedLabel}</span>
           </div>
         )}
       </div>
@@ -61,6 +64,7 @@ function Stick({ label, xRaw, yRaw, xControl, yControl, available }: StickProps)
 
 /** Dual virtual joystick panel. Left stick: X=J4, Y=J3. Right stick: X=J1, Y=J2. */
 export function VirtualStick() {
+  const { t } = useI18n();
   const channels = useSbusStore((s) => s.data.channels);
   const presetStore = usePresetStore();
 
@@ -86,23 +90,27 @@ export function VirtualStick() {
   const j1 = idxJ1 >= 0 ? channels[idxJ1] : CHANNEL_MID;
   const j2 = idxJ2 >= 0 ? channels[idxJ2] : CHANNEL_MID;
 
+  const unmappedLabel = t("stick.unmapped");
+
   return (
     <div className="flex items-center justify-around bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-4">
       <Stick
-        label="左摇杆"
+        label={t("stick.left")}
         xRaw={j4}
         yRaw={j3}
         xControl="J4 (X)"
         yControl="J3 (Y)"
         available={leftAvailable}
+        unmappedLabel={unmappedLabel}
       />
       <Stick
-        label="右摇杆"
+        label={t("stick.right")}
         xRaw={j1}
         yRaw={j2}
         xControl="J1 (X)"
         yControl="J2 (Y)"
         available={rightAvailable}
+        unmappedLabel={unmappedLabel}
       />
     </div>
   );

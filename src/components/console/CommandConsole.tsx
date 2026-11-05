@@ -2,8 +2,10 @@ import { useState, useRef, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useImuStore } from "../../stores/imu-store";
+import { useI18n } from "../../i18n";
 
 export function CommandConsole() {
+  const { t } = useI18n();
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const connected = useImuStore((s) => s.connected);
@@ -47,7 +49,7 @@ export function CommandConsole() {
   return (
     <div className="flex flex-col h-full border-t border-zinc-800">
       <div className="px-3 py-1.5 text-xs font-medium text-zinc-400 uppercase tracking-wider border-b border-zinc-800 bg-zinc-900/80">
-        Command Console
+        {t("imu.console.title")}
       </div>
       {/* Output area */}
       <div
@@ -56,7 +58,7 @@ export function CommandConsole() {
       >
         {consoleLines.length === 0 ? (
           <span className="text-zinc-600">
-            Type AT commands (e.g. LOG VERSION, LOG ENABLE)
+            {t("imu.console.emptyHint")}
           </span>
         ) : (
           consoleLines.map((line, i) => (
@@ -82,7 +84,7 @@ export function CommandConsole() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={!connected}
-          placeholder={connected ? "Enter command..." : "Connect first"}
+          placeholder={connected ? t("imu.console.placeholder.connected") : t("imu.console.placeholder.disconnected")}
           className="flex-1 h-7 rounded-md bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs font-mono px-2 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 placeholder:text-zinc-600"
         />
         <button
@@ -90,7 +92,7 @@ export function CommandConsole() {
           disabled={!connected || !input.trim()}
           className="h-7 px-3 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          Send
+          {t("common.send")}
         </button>
       </div>
     </div>

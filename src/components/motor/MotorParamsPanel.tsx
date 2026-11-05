@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useMotorStore } from "../../stores/motor-store";
 import type { ParamDef } from "../../types/motor";
+import { useI18n } from "../../i18n";
 
 export function MotorParamsPanel() {
+  const { t } = useI18n();
   const connected = useMotorStore((s) => s.connected);
   const config = useMotorStore((s) => s.config);
   const activeMotorId = useMotorStore((s) => s.activeMotorId);
@@ -110,6 +112,13 @@ export function MotorParamsPanel() {
   const [newCanId, setNewCanId] = useState("");
   const [canIdStatus, setCanIdStatus] = useState("");
 
+  const modeLabel = (mode_status: number): string => {
+    if (mode_status === 0) return t("motor.params.feedback.mode.reset");
+    if (mode_status === 1) return t("motor.params.feedback.mode.calibration");
+    if (mode_status === 2) return t("motor.params.feedback.mode.motor");
+    return t("motor.params.feedback.mode.unknown", { n: mode_status });
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Tabs */}
@@ -124,7 +133,11 @@ export function MotorParamsPanel() {
             }`}
             onClick={() => setActiveTab(tab)}
           >
-            {tab === "params" ? "Parameters" : tab === "config" ? "Config" : "Faults"}
+            {tab === "params"
+              ? t("motor.params.tab.params")
+              : tab === "config"
+              ? t("motor.params.tab.config")
+              : t("motor.params.tab.faults")}
           </button>
         ))}
       </div>
@@ -139,26 +152,26 @@ export function MotorParamsPanel() {
                 disabled={!connected || readingAll}
                 onClick={readAllParams}
               >
-                {readingAll ? "Reading..." : "Read All"}
+                {readingAll ? t("motor.params.reading") : t("motor.params.readAll")}
               </button>
               <button
                 className="px-2 py-1 text-[10px] bg-amber-600 hover:bg-amber-500 text-white rounded disabled:opacity-40"
                 disabled={!connected}
                 onClick={saveToFlash}
               >
-                Save to Flash
+                {t("motor.params.saveToFlash")}
               </button>
             </div>
 
             {/* Writable params */}
-            <div className="text-[10px] text-zinc-500 font-medium mb-1">Writable Parameters</div>
+            <div className="text-[10px] text-zinc-500 font-medium mb-1">{t("motor.params.writableParams")}</div>
             <table className="w-full text-[10px] font-mono">
               <thead>
                 <tr className="text-zinc-500 border-b border-zinc-800">
-                  <th className="text-left py-0.5 px-1 w-16">Index</th>
-                  <th className="text-left py-0.5 px-1">Name</th>
-                  <th className="text-right py-0.5 px-1 w-20">Value</th>
-                  <th className="text-left py-0.5 px-1 w-20">Set</th>
+                  <th className="text-left py-0.5 px-1 w-16">{t("motor.params.col.index")}</th>
+                  <th className="text-left py-0.5 px-1">{t("motor.params.col.name")}</th>
+                  <th className="text-right py-0.5 px-1 w-20">{t("motor.params.col.value")}</th>
+                  <th className="text-left py-0.5 px-1 w-20">{t("motor.params.col.set")}</th>
                   <th className="py-0.5 px-1 w-12"></th>
                 </tr>
               </thead>
@@ -207,15 +220,15 @@ export function MotorParamsPanel() {
             {readonlyParams.length > 0 && (
               <>
                 <div className="text-[10px] text-zinc-500 font-medium mt-3 mb-1">
-                  Read-Only Parameters
-                  <span className="text-zinc-600 font-normal ml-1">(firmware &ge; 0.0.3.5)</span>
+                  {t("motor.params.readonlyParams")}
+                  <span className="text-zinc-600 font-normal ml-1">{t("motor.params.readonlyFirmwareNote")}</span>
                 </div>
                 <table className="w-full text-[10px] font-mono">
                   <thead>
                     <tr className="text-zinc-500 border-b border-zinc-800">
-                      <th className="text-left py-0.5 px-1 w-16">Index</th>
-                      <th className="text-left py-0.5 px-1">Name</th>
-                      <th className="text-right py-0.5 px-1 w-24">Value</th>
+                      <th className="text-left py-0.5 px-1 w-16">{t("motor.params.col.index")}</th>
+                      <th className="text-left py-0.5 px-1">{t("motor.params.col.name")}</th>
+                      <th className="text-right py-0.5 px-1 w-24">{t("motor.params.col.value")}</th>
                       <th className="py-0.5 px-1 w-8"></th>
                     </tr>
                   </thead>
@@ -243,20 +256,20 @@ export function MotorParamsPanel() {
 
             {/* Realtime Feedback (from type 2 / type 24 frames) */}
             <div className="text-[10px] text-zinc-500 font-medium mt-3 mb-1">
-              Realtime Feedback
-              <span className="text-zinc-600 font-normal ml-1">(from type 2 response frames)</span>
+              {t("motor.params.realtimeFeedback")}
+              <span className="text-zinc-600 font-normal ml-1">{t("motor.params.realtimeFeedbackNote")}</span>
             </div>
             {privateFeedback ? (
               <table className="w-full text-[10px] font-mono">
                 <tbody>
                   {[
-                    { label: "Angle", value: `${privateFeedback.angle.toFixed(4)} rad`, color: "text-emerald-400" },
-                    { label: "Velocity", value: `${privateFeedback.velocity.toFixed(4)} rad/s`, color: "text-emerald-400" },
-                    { label: "Torque", value: `${privateFeedback.torque.toFixed(4)} N.m`, color: "text-emerald-400" },
-                    { label: "Temperature", value: `${privateFeedback.temperature.toFixed(1)} °C`, color: "text-emerald-400" },
-                    { label: "Mode", value: ["Reset", "Calibration", "Motor"][privateFeedback.mode_status] ?? `Unknown(${privateFeedback.mode_status})`, color: "text-blue-400" },
-                    { label: "Fault Bits", value: privateFeedback.fault_bits === 0 ? "None" : `0x${privateFeedback.fault_bits.toString(16).toUpperCase()}`, color: privateFeedback.fault_bits === 0 ? "text-emerald-400" : "text-red-400" },
-                    { label: "Motor ID", value: privateFeedback.motor_id.toString(), color: "text-zinc-300" },
+                    { label: t("motor.params.feedback.angle"), value: `${privateFeedback.angle.toFixed(4)} rad`, color: "text-emerald-400" },
+                    { label: t("motor.params.feedback.velocity"), value: `${privateFeedback.velocity.toFixed(4)} rad/s`, color: "text-emerald-400" },
+                    { label: t("motor.params.feedback.torque"), value: `${privateFeedback.torque.toFixed(4)} N.m`, color: "text-emerald-400" },
+                    { label: t("motor.params.feedback.temperature"), value: `${privateFeedback.temperature.toFixed(1)} °C`, color: "text-emerald-400" },
+                    { label: t("motor.params.feedback.mode"), value: modeLabel(privateFeedback.mode_status), color: "text-blue-400" },
+                    { label: t("motor.params.feedback.faultBits"), value: privateFeedback.fault_bits === 0 ? t("motor.params.feedback.faultBits.none") : `0x${privateFeedback.fault_bits.toString(16).toUpperCase()}`, color: privateFeedback.fault_bits === 0 ? "text-emerald-400" : "text-red-400" },
+                    { label: t("motor.params.feedback.motorId"), value: privateFeedback.motor_id.toString(), color: "text-zinc-300" },
                   ].map((row) => (
                     <tr key={row.label} className="border-b border-zinc-800/50">
                       <td className="py-0.5 px-1 text-zinc-500 w-24">{row.label}</td>
@@ -267,7 +280,7 @@ export function MotorParamsPanel() {
               </table>
             ) : (
               <div className="text-[10px] text-zinc-600 bg-zinc-800/50 rounded p-2">
-                No feedback yet. Enable the motor or start active reporting (Config tab) to receive type 2 frames.
+                {t("motor.params.noFeedback")}
               </div>
             )}
           </div>
@@ -277,9 +290,9 @@ export function MotorParamsPanel() {
           <div className="p-3 space-y-4">
             {/* Protocol Switch */}
             <div>
-              <div className="text-[11px] text-zinc-400 font-medium mb-2">Protocol Switch</div>
+              <div className="text-[11px] text-zinc-400 font-medium mb-2">{t("motor.config.protocolSwitch")}</div>
               <p className="text-[10px] text-zinc-600 mb-2">
-                Changes require power cycle to take effect.
+                {t("motor.config.protocolSwitch.hint")}
               </p>
               <div className="flex gap-2 items-center">
                 <select
@@ -287,9 +300,9 @@ export function MotorParamsPanel() {
                   value={protocolVal}
                   onChange={(e) => setProtocolVal(e.target.value)}
                 >
-                  <option value="0">Private Protocol</option>
-                  <option value="1">CANopen</option>
-                  <option value="2">MIT Protocol</option>
+                  <option value="0">{t("motor.config.protocol.private")}</option>
+                  <option value="1">{t("motor.config.protocol.canopen")}</option>
+                  <option value="2">{t("motor.config.protocol.mit")}</option>
                 </select>
                 <button
                   className="px-2 py-1 text-[10px] bg-orange-600 hover:bg-orange-500 text-white rounded disabled:opacity-40"
@@ -300,7 +313,7 @@ export function MotorParamsPanel() {
                     } catch (e) { console.error(e); }
                   }}
                 >
-                  Switch (Private)
+                  {t("motor.config.switchPrivate")}
                 </button>
                 <button
                   className="px-2 py-1 text-[10px] bg-orange-600 hover:bg-orange-500 text-white rounded disabled:opacity-40"
@@ -311,16 +324,16 @@ export function MotorParamsPanel() {
                     } catch (e) { console.error(e); }
                   }}
                 >
-                  Switch (MIT Cmd8)
+                  {t("motor.config.switchMit")}
                 </button>
               </div>
             </div>
 
             {/* Baud Rate */}
             <div>
-              <div className="text-[11px] text-zinc-400 font-medium mb-2">Baud Rate</div>
+              <div className="text-[11px] text-zinc-400 font-medium mb-2">{t("motor.config.baudRate")}</div>
               <p className="text-[10px] text-zinc-600 mb-2">
-                Requires power cycle. Default 1Mbps.
+                {t("motor.config.baudRate.hint")}
               </p>
               <div className="flex gap-2 items-center">
                 <select
@@ -328,10 +341,10 @@ export function MotorParamsPanel() {
                   value={baudVal}
                   onChange={(e) => setBaudVal(e.target.value)}
                 >
-                  <option value="1">1 Mbps</option>
-                  <option value="2">500 Kbps</option>
-                  <option value="3">250 Kbps</option>
-                  <option value="4">125 Kbps</option>
+                  <option value="1">{t("motor.config.baud.1m")}</option>
+                  <option value="2">{t("motor.config.baud.500k")}</option>
+                  <option value="3">{t("motor.config.baud.250k")}</option>
+                  <option value="4">{t("motor.config.baud.125k")}</option>
                 </select>
                 <button
                   className="px-2 py-1 text-[10px] bg-zinc-700 hover:bg-zinc-600 text-zinc-200 rounded disabled:opacity-40"
@@ -342,16 +355,16 @@ export function MotorParamsPanel() {
                     } catch (e) { console.error(e); }
                   }}
                 >
-                  Set Baud Rate
+                  {t("motor.config.setBaudRate")}
                 </button>
               </div>
             </div>
 
             {/* Active Report */}
             <div>
-              <div className="text-[11px] text-zinc-400 font-medium mb-2">Active Reporting</div>
+              <div className="text-[11px] text-zinc-400 font-medium mb-2">{t("motor.config.activeReport")}</div>
               <p className="text-[10px] text-zinc-600 mb-2">
-                Motor sends feedback periodically without control commands.
+                {t("motor.config.activeReport.hint")}
               </p>
               <div className="flex gap-2 items-center">
                 <button
@@ -369,14 +382,14 @@ export function MotorParamsPanel() {
                     } catch (e) { console.error(e); }
                   }}
                 >
-                  {reportEnabled ? "Stop Report" : "Start Report"}
+                  {reportEnabled ? t("motor.config.stopReport") : t("motor.config.startReport")}
                 </button>
               </div>
             </div>
 
             {/* Device Info */}
             <div>
-              <div className="text-[11px] text-zinc-400 font-medium mb-2">Device Info</div>
+              <div className="text-[11px] text-zinc-400 font-medium mb-2">{t("motor.config.deviceInfo")}</div>
               <div className="flex gap-2 mb-2">
                 <button
                   className="px-2 py-1 text-[10px] bg-zinc-700 hover:bg-zinc-600 text-zinc-200 rounded disabled:opacity-40"
@@ -385,7 +398,7 @@ export function MotorParamsPanel() {
                     try { await invoke("priv_get_device_id", { motorId }); } catch (e) { console.error(e); }
                   }}
                 >
-                  Get Device ID
+                  {t("motor.config.getDeviceId")}
                 </button>
                 <button
                   className="px-2 py-1 text-[10px] bg-zinc-700 hover:bg-zinc-600 text-zinc-200 rounded disabled:opacity-40"
@@ -394,23 +407,23 @@ export function MotorParamsPanel() {
                     try { await invoke("priv_read_version", { motorId }); } catch (e) { console.error(e); }
                   }}
                 >
-                  Read Version
+                  {t("motor.config.readVersion")}
                 </button>
               </div>
               {(deviceId || firmwareVersion) && (
                 <div className="bg-zinc-800/50 rounded p-2 text-[10px] font-mono space-y-0.5">
                   {deviceId && (
                     <div className="text-zinc-300">
-                      <span className="text-zinc-500">MCU ID: </span>
+                      <span className="text-zinc-500">{t("motor.config.mcuId")} </span>
                       {deviceId}
                       {activeMotorId !== null && (
-                        <span className="text-zinc-500 ml-2">(Motor CAN ID: {activeMotorId})</span>
+                        <span className="text-zinc-500 ml-2">{t("motor.config.motorCanIdRef", { id: activeMotorId })}</span>
                       )}
                     </div>
                   )}
                   {firmwareVersion && (
                     <div className="text-zinc-300">
-                      <span className="text-zinc-500">Version: </span>
+                      <span className="text-zinc-500">{t("motor.config.version")} </span>
                       {firmwareVersion}
                     </div>
                   )}
@@ -420,9 +433,9 @@ export function MotorParamsPanel() {
 
             {/* Set CAN ID */}
             <div>
-              <div className="text-[11px] text-zinc-400 font-medium mb-2">Set Motor CAN ID</div>
+              <div className="text-[11px] text-zinc-400 font-medium mb-2">{t("motor.config.setCanId.title")}</div>
               <p className="text-[10px] text-zinc-600 mb-2">
-                Change the motor's CAN ID via private protocol type 7, auto-saves to flash.
+                {t("motor.config.setCanId.hint")}
               </p>
               <div className="flex gap-2 items-center">
                 <input
@@ -430,7 +443,7 @@ export function MotorParamsPanel() {
                   className="w-16 px-2 py-1 text-[11px] bg-zinc-800 border border-zinc-700 text-zinc-200 rounded focus:border-blue-500 focus:outline-none"
                   min={0}
                   max={127}
-                  placeholder="0~127"
+                  placeholder={t("motor.config.setCanId.placeholder")}
                   value={newCanId}
                   onChange={(e) => setNewCanId(e.target.value)}
                 />
@@ -443,22 +456,22 @@ export function MotorParamsPanel() {
                     setCanIdStatus("");
                     try {
                       await invoke("priv_set_can_id", { motorId, newId: id });
-                      setCanIdStatus("Set CAN ID sent. Saving to flash...");
+                      setCanIdStatus(t("motor.config.setCanId.sending"));
                       await new Promise((r) => setTimeout(r, 50));
                       await invoke("priv_save_params", { motorId });
                       // Sync backend config to the new motor ID
                       await invoke("udp_update_motor_ids", { motorId: id, masterId: config.master_id }).catch(() => {});
-                      setCanIdStatus(`CAN ID → ${id} saved. Motor ID updated. Power cycle the motor to apply.`);
+                      setCanIdStatus(t("motor.config.setCanId.success", { id }));
                     } catch (e) {
-                      setCanIdStatus(`Error: ${e}`);
+                      setCanIdStatus(t("motor.config.setCanId.error", { e: String(e) }));
                     }
                   }}
                 >
-                  Set CAN ID
+                  {t("motor.config.setCanId.button")}
                 </button>
               </div>
               {canIdStatus && (
-                <p className={`text-[10px] mt-1.5 ${canIdStatus.startsWith("Error") ? "text-red-400" : "text-amber-400"}`}>
+                <p className={`text-[10px] mt-1.5 ${canIdStatus.startsWith(t("motor.config.setCanId.error", { e: "" }).slice(0, 3)) ? "text-red-400" : "text-amber-400"}`}>
                   {canIdStatus}
                 </p>
               )}
@@ -476,7 +489,7 @@ export function MotorParamsPanel() {
                   try { await invoke("motor_read_fault", { motorId }); } catch (e) { console.error(e); }
                 }}
               >
-                Read Faults (MIT)
+                {t("motor.faults.readMit")}
               </button>
               <button
                 className="px-2 py-1 text-[10px] bg-blue-600 hover:bg-blue-500 text-white rounded disabled:opacity-40"
@@ -485,7 +498,7 @@ export function MotorParamsPanel() {
                   try { await invoke("priv_fault_feedback", { motorId }); } catch (e) { console.error(e); }
                 }}
               >
-                Read Faults (Private)
+                {t("motor.faults.readPrivate")}
               </button>
               <button
                 className="px-2 py-1 text-[10px] bg-amber-600 hover:bg-amber-500 text-white rounded disabled:opacity-40"
@@ -494,17 +507,17 @@ export function MotorParamsPanel() {
                   try { await invoke("motor_clear_fault", { motorId }); } catch (e) { console.error(e); }
                 }}
               >
-                Clear Faults
+                {t("motor.faults.clear")}
               </button>
             </div>
 
             {faultStatus ? (
               <div>
                 <div className="text-[11px] text-zinc-400 mb-1">
-                  Raw: 0x{faultStatus.raw.toString(16).toUpperCase().padStart(8, "0")}
+                  {t("motor.faults.raw")} 0x{faultStatus.raw.toString(16).toUpperCase().padStart(8, "0")}
                 </div>
                 {faultStatus.faults.length === 0 ? (
-                  <div className="text-[11px] text-emerald-400 py-2">No faults detected</div>
+                  <div className="text-[11px] text-emerald-400 py-2">{t("motor.faults.none")}</div>
                 ) : (
                   <div className="space-y-1">
                     {faultStatus.faults.map((f, i) => (
@@ -518,7 +531,7 @@ export function MotorParamsPanel() {
               </div>
             ) : (
               <div className="text-[11px] text-zinc-600 py-4 text-center">
-                No fault data. Click "Read Faults" to check.
+                {t("motor.faults.noData")}
               </div>
             )}
           </div>

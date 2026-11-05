@@ -1,4 +1,5 @@
 import { useImuStore } from "../../stores/imu-store";
+import { useI18n } from "../../i18n";
 
 function fmt(v: number | undefined, decimals = 3): string {
   if (v === undefined || v === null) return "---";
@@ -6,12 +7,13 @@ function fmt(v: number | undefined, decimals = 3): string {
 }
 
 export function DataDashboard() {
+  const { t } = useI18n();
   const latest = useImuStore((s) => s.latest);
 
   if (!latest) {
     return (
       <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-900/50">
-        <div className="text-zinc-500 text-sm">Waiting for data...</div>
+        <div className="text-zinc-500 text-sm">{t("imu.dashboard.waitingForData")}</div>
       </div>
     );
   }
@@ -22,7 +24,7 @@ export function DataDashboard() {
         {/* Accelerometer */}
         <div className="space-y-1">
           <div className="text-zinc-400 font-medium text-xs uppercase tracking-wider">
-            Acc (m/s²)
+            {t("imu.dashboard.acc")}
           </div>
           <div className="grid grid-cols-[auto_1fr] gap-x-2 text-zinc-200 font-mono">
             <span className="text-red-400">X</span>
@@ -37,7 +39,7 @@ export function DataDashboard() {
         {/* Gyroscope */}
         <div className="space-y-1">
           <div className="text-zinc-400 font-medium text-xs uppercase tracking-wider">
-            Gyr (°/s)
+            {t("imu.dashboard.gyr")}
           </div>
           <div className="grid grid-cols-[auto_1fr] gap-x-2 text-zinc-200 font-mono">
             <span className="text-red-400">X</span>
@@ -52,7 +54,7 @@ export function DataDashboard() {
         {/* Magnetometer */}
         <div className="space-y-1">
           <div className="text-zinc-400 font-medium text-xs uppercase tracking-wider">
-            Mag (uT)
+            {t("imu.dashboard.mag")}
           </div>
           <div className="grid grid-cols-[auto_1fr] gap-x-2 text-zinc-200 font-mono">
             <span className="text-red-400">X</span>
@@ -67,7 +69,7 @@ export function DataDashboard() {
         {/* Euler angles */}
         <div className="space-y-1">
           <div className="text-zinc-400 font-medium text-xs uppercase tracking-wider">
-            Euler (°)
+            {t("imu.dashboard.euler")}
           </div>
           <div className="grid grid-cols-[auto_1fr] gap-x-2 text-zinc-200 font-mono">
             <span className="text-orange-400">R</span>
@@ -82,7 +84,7 @@ export function DataDashboard() {
         {/* Quaternion */}
         <div className="space-y-1">
           <div className="text-zinc-400 font-medium text-xs uppercase tracking-wider">
-            Quaternion
+            {t("imu.dashboard.quat")}
           </div>
           <div className="grid grid-cols-[auto_1fr] gap-x-2 text-zinc-200 font-mono">
             <span className="text-purple-400">w</span>
@@ -99,7 +101,7 @@ export function DataDashboard() {
         {/* Environment */}
         <div className="space-y-1">
           <div className="text-zinc-400 font-medium text-xs uppercase tracking-wider">
-            Environment
+            {t("imu.dashboard.env")}
           </div>
           <div className="grid grid-cols-[auto_1fr] gap-x-2 text-zinc-200 font-mono">
             <span className="text-yellow-400">T</span>

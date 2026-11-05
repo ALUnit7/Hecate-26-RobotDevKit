@@ -6,9 +6,11 @@ import { MotorParamsPanel } from "../../../components/motor/MotorParamsPanel";
 import { MotorDashboard } from "../../../components/motor/MotorDashboard";
 import { MotorChart } from "../../../components/motor/MotorChart";
 import { CanFrameLog } from "../../../components/motor/CanFrameLog";
+import { useI18n } from "../../../i18n";
 
 export function RS00DebugPage() {
   useMotorData();
+  const { t } = useI18n();
   const [rightPanel, setRightPanel] = useState<"control" | "params">("control");
 
   return (
@@ -35,7 +37,7 @@ export function RS00DebugPage() {
               }`}
               onClick={() => setRightPanel("control")}
             >
-              Control
+              {t("rs00.tab.control")}
             </button>
             <button
               className={`px-3 py-1.5 text-[11px] font-medium transition-colors ${
@@ -45,7 +47,7 @@ export function RS00DebugPage() {
               }`}
               onClick={() => setRightPanel("params")}
             >
-              Params / Config
+              {t("rs00.tab.params")}
             </button>
           </div>
           <div className="flex-1 overflow-hidden">

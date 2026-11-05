@@ -4,11 +4,13 @@ import { FiRadio, FiRefreshCw, FiAlertTriangle } from "react-icons/fi";
 import { useSbusStore } from "../../stores/sbus-store";
 import type { PortInfo } from "../../types/imu";
 import { cn } from "../../lib/utils";
+import { useI18n } from "../../i18n";
 
 const BAUD_RATES = [100000, 115200, 200000];
 
 /** Shared serial connection toolbar used by both mapped and raw sub-pages */
 export function SbusToolbar() {
+  const { t } = useI18n();
   const [ports, setPorts] = useState<PortInfo[]>([]);
   const [selectedPort, setSelectedPort] = useState("");
   const { connected, baudRate, signalLost, error, setConnected, setBaudRate, setError, reset } =
@@ -50,7 +52,7 @@ export function SbusToolbar() {
         disabled={connected}
         className="h-7 rounded bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs px-2 focus:outline-none focus:border-zinc-500 disabled:opacity-50"
       >
-        {ports.length === 0 && <option value="">No ports found</option>}
+        {ports.length === 0 && <option value="">{t("common.noPortsFound")}</option>}
         {ports.map((p) => (
           <option key={p.name} value={p.name}>{p.name} — {p.port_type}</option>
         ))}
@@ -59,7 +61,7 @@ export function SbusToolbar() {
         onClick={refreshPorts}
         disabled={connected}
         className="h-7 w-7 rounded bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 disabled:opacity-50 flex items-center justify-center"
-        title="Refresh ports"
+        title={t("common.refreshPorts")}
       >
         <FiRefreshCw className="w-3 h-3" />
       </button>
@@ -83,13 +85,13 @@ export function SbusToolbar() {
         )}
       >
         <FiRadio className="w-3 h-3" />
-        {connected ? "Disconnect" : "Connect"}
+        {connected ? t("common.disconnect") : t("common.connect")}
       </button>
       <div className="ml-auto flex items-center gap-3">
         {signalLost && connected && (
           <span className="flex items-center gap-1 text-amber-400 text-[10px]">
             <FiAlertTriangle className="w-3 h-3" />
-            Signal lost
+            {t("toolbar.status.signalLost")}
           </span>
         )}
         <div className="flex items-center gap-1.5">
@@ -97,7 +99,11 @@ export function SbusToolbar() {
             connected && !signalLost ? "bg-emerald-500" : connected ? "bg-amber-500" : "bg-zinc-600"
           )} />
           <span className="text-zinc-400 text-[10px]">
-            {!connected ? "Disconnected" : signalLost ? "No signal" : "Receiving"}
+            {!connected
+              ? t("common.disconnected")
+              : signalLost
+              ? t("toolbar.status.noSignal")
+              : t("toolbar.status.receiving")}
           </span>
         </div>
       </div>

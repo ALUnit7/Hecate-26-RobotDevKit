@@ -9,6 +9,7 @@ import {
 } from "react-icons/fi";
 import { usePresetStore } from "../../stores/preset-store";
 import { cn } from "../../lib/utils";
+import { useI18n } from "../../i18n";
 
 interface Props {
   /** Open the channel-mapping editor panel */
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export function PresetToolbar({ onEditChannels }: Props) {
+  const { t } = useI18n();
   const { presets, activeId, loaded, error, setActive, createPreset, duplicatePreset, renamePreset, deletePreset } =
     usePresetStore();
   const [renaming, setRenaming] = useState<string | null>(null);
@@ -26,7 +28,7 @@ export function PresetToolbar({ onEditChannels }: Props) {
   if (!loaded) {
     return (
       <div className="flex items-center px-3 py-1.5 bg-zinc-900 border-b border-zinc-800 text-xs text-zinc-600 shrink-0">
-        加载预设…
+        {t("preset.loading")}
       </div>
     );
   }
@@ -46,7 +48,7 @@ export function PresetToolbar({ onEditChannels }: Props) {
 
   const handleDelete = () => {
     if (!active || active.builtIn) return;
-    if (confirm(`删除预设「${active.name}」？此操作不可撤销。`)) {
+    if (confirm(t("preset.deleteConfirm", { name: active.name }))) {
       deletePreset(active.id);
     }
   };
@@ -55,7 +57,7 @@ export function PresetToolbar({ onEditChannels }: Props) {
     <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border-b border-zinc-800 text-xs shrink-0 flex-wrap">
       {/* Preset selector */}
       <div className="relative flex items-center">
-        <span className="text-zinc-500 mr-1">预设</span>
+        <span className="text-zinc-500 mr-1">{t("preset.label")}</span>
         {renaming === activeId && active ? (
           <input
             autoFocus
@@ -78,7 +80,7 @@ export function PresetToolbar({ onEditChannels }: Props) {
               {presets.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
-                  {p.builtIn ? " ★" : ""}
+                  {p.builtIn ? ` ${t("preset.builtIn")}` : ""}
                 </option>
               ))}
             </select>
@@ -93,11 +95,11 @@ export function PresetToolbar({ onEditChannels }: Props) {
       {/* New */}
       <button
         onClick={() => {
-          const name = prompt("新建预设名称：", "新预设");
+          const name = prompt(t("preset.new.prompt"), t("preset.new.defaultName"));
           if (name && name.trim()) createPreset(name.trim());
         }}
         className="flex items-center gap-1 h-7 px-2 rounded text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
-        title="新建预设"
+        title={t("preset.tooltip.new")}
       >
         <FiPlus className="w-3.5 h-3.5" />
       </button>
@@ -107,7 +109,7 @@ export function PresetToolbar({ onEditChannels }: Props) {
         onClick={() => active && duplicatePreset(active.id)}
         disabled={!active}
         className="flex items-center gap-1 h-7 px-2 rounded text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors disabled:opacity-30"
-        title="复制当前预设"
+        title={t("preset.tooltip.duplicate")}
       >
         <FiCopy className="w-3.5 h-3.5" />
       </button>
@@ -117,7 +119,7 @@ export function PresetToolbar({ onEditChannels }: Props) {
         onClick={handleRenameStart}
         disabled={!active || active.builtIn}
         className="flex items-center gap-1 h-7 px-2 rounded text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors disabled:opacity-30"
-        title={active?.builtIn ? "内置预设不可重命名" : "重命名当前预设"}
+        title={active?.builtIn ? t("preset.tooltip.renameDisabled") : t("preset.tooltip.rename")}
       >
         <FiEdit2 className="w-3.5 h-3.5" />
       </button>
@@ -127,7 +129,7 @@ export function PresetToolbar({ onEditChannels }: Props) {
         onClick={handleDelete}
         disabled={!active || active.builtIn}
         className="flex items-center gap-1 h-7 px-2 rounded text-zinc-400 hover:text-red-400 hover:bg-zinc-800 transition-colors disabled:opacity-30"
-        title={active?.builtIn ? "内置预设不可删除" : "删除当前预设"}
+        title={active?.builtIn ? t("preset.tooltip.deleteDisabled") : t("preset.tooltip.delete")}
       >
         <FiTrash2 className="w-3.5 h-3.5" />
       </button>
@@ -142,14 +144,14 @@ export function PresetToolbar({ onEditChannels }: Props) {
             ? "bg-sky-500/15 text-sky-400 hover:bg-sky-500/25"
             : "bg-zinc-800 text-zinc-500"
         )}
-        title={active?.builtIn ? "内置预设不可编辑，请先复制" : "编辑通道映射"}
+        title={active?.builtIn ? t("preset.tooltip.editDisabled") : t("preset.tooltip.editChannels")}
       >
         <FiSliders className="w-3.5 h-3.5" />
-        编辑通道
+        {t("preset.btn.editChannels")}
       </button>
 
       {active?.builtIn && (
-        <span className="text-[10px] text-zinc-600 ml-1">内置预设只读 · 请复制后编辑</span>
+        <span className="text-[10px] text-zinc-600 ml-1">{t("preset.readOnly")}</span>
       )}
 
       {error && (

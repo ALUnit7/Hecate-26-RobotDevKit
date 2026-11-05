@@ -3,40 +3,48 @@ import uPlot from "uplot";
 import "uplot/dist/uPlot.min.css";
 import { useImuStore } from "../../stores/imu-store";
 import { cn } from "../../lib/utils";
+import { useI18n } from "../../i18n";
+import type { I18nKeys } from "../../i18n/zh";
 
 type TabKey = "acc" | "gyr" | "mag" | "euler";
 
 const TAB_CONFIG: Record<
   TabKey,
-  { label: string; unit: string; keys: string[]; colors: string[] }
+  { labelKey: I18nKeys; unit: string; keys: string[]; seriesKeys?: I18nKeys[]; colors: string[] }
 > = {
   acc: {
-    label: "Accelerometer",
+    labelKey: "imu.chart.tab.acc",
     unit: "m/s²",
     keys: ["X", "Y", "Z"],
     colors: ["#ef4444", "#22c55e", "#3b82f6"],
   },
   gyr: {
-    label: "Gyroscope",
+    labelKey: "imu.chart.tab.gyr",
     unit: "°/s",
     keys: ["X", "Y", "Z"],
     colors: ["#ef4444", "#22c55e", "#3b82f6"],
   },
   mag: {
-    label: "Magnetometer",
+    labelKey: "imu.chart.tab.mag",
     unit: "uT",
     keys: ["X", "Y", "Z"],
     colors: ["#ef4444", "#22c55e", "#3b82f6"],
   },
   euler: {
-    label: "Euler Angles",
+    labelKey: "imu.chart.tab.euler",
     unit: "°",
     keys: ["Roll", "Pitch", "Yaw"],
+    seriesKeys: [
+      "imu.chart.series.roll",
+      "imu.chart.series.pitch",
+      "imu.chart.series.yaw",
+    ] as I18nKeys[],
     colors: ["#f97316", "#a855f7", "#06b6d4"],
   },
 };
 
 export function RealtimeChart() {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<TabKey>("acc");
   const chartRef = useRef<HTMLDivElement>(null);
   const uplotRef = useRef<uPlot | null>(null);
@@ -108,7 +116,7 @@ export function RealtimeChart() {
           grid: { stroke: "#27272a", width: 1 },
           ticks: { stroke: "#3f3f46" },
           font: "11px monospace",
-          label: "Time (s)",
+          label: t("imu.chart.axis.time"),
           labelFont: "11px sans-serif",
           labelGap: 4,
         },
@@ -117,25 +125,25 @@ export function RealtimeChart() {
           grid: { stroke: "#27272a", width: 1 },
           ticks: { stroke: "#3f3f46" },
           font: "11px monospace",
-          label: `${config.label} (${config.unit})`,
+          label: `${t(config.labelKey)} (${config.unit})`,
           labelFont: "11px sans-serif",
           labelGap: 4,
         },
       ],
       series: [
-        { label: "Time" },
+        { label: t("imu.chart.axis.time") },
         {
-          label: config.keys[0],
+          label: config.seriesKeys ? t(config.seriesKeys[0]) : config.keys[0],
           stroke: config.colors[0],
           width: 1.5,
         },
         {
-          label: config.keys[1],
+          label: config.seriesKeys ? t(config.seriesKeys[1]) : config.keys[1],
           stroke: config.colors[1],
           width: 1.5,
         },
         {
-          label: config.keys[2],
+          label: config.seriesKeys ? t(config.seriesKeys[2]) : config.keys[2],
           stroke: config.colors[2],
           width: 1.5,
         },
@@ -185,7 +193,7 @@ export function RealtimeChart() {
                 : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50"
             )}
           >
-            {TAB_CONFIG[key].label}
+            {t(TAB_CONFIG[key].labelKey)}
           </button>
         ))}
       </div>

@@ -4,10 +4,12 @@ import { listen } from "@tauri-apps/api/event";
 import type { PortInfo } from "../../types/imu";
 import { useImuStore } from "../../stores/imu-store";
 import { cn } from "../../lib/utils";
+import { useI18n } from "../../i18n";
 
 const BAUD_RATES = [4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600];
 
 export function ConnectionToolbar() {
+  const { t } = useI18n();
   const [ports, setPorts] = useState<PortInfo[]>([]);
   const [selectedPort, setSelectedPort] = useState("");
   const [error, setError] = useState("");
@@ -74,7 +76,7 @@ export function ConnectionToolbar() {
           disabled={connected}
           className="h-8 rounded-md bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm px-2 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
         >
-          {ports.length === 0 && <option value="">No ports found</option>}
+          {ports.length === 0 && <option value="">{t("common.noPortsFound")}</option>}
           {ports.map((p) => (
             <option key={p.name} value={p.name}>
               {p.name} - {p.port_type}
@@ -85,7 +87,7 @@ export function ConnectionToolbar() {
           onClick={refreshPorts}
           disabled={connected}
           className="h-8 w-8 rounded-md bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 disabled:opacity-50 text-sm flex items-center justify-center"
-          title="Refresh ports"
+          title={t("common.refreshPorts")}
         >
           &#x21bb;
         </button>
@@ -115,7 +117,7 @@ export function ConnectionToolbar() {
             : "bg-blue-600 hover:bg-blue-700 text-white"
         )}
       >
-        {connected ? "Disconnect" : "Connect"}
+        {connected ? t("common.disconnect") : t("common.connect")}
       </button>
 
       {/* Status */}
@@ -133,7 +135,9 @@ export function ConnectionToolbar() {
             )}
           />
           <span className="text-zinc-400">
-            {connected ? `Connected · ${fps} fps` : "Disconnected"}
+            {connected
+              ? `${t("common.connected")} · ${t("toolbar.fps", { fps })}`
+              : t("common.disconnected")}
           </span>
         </div>
       </div>

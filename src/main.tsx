@@ -9,21 +9,24 @@ import { RS00DebugPage } from "./pages/motor-debug/rs00/RS00DebugPage";
 import { RemoteSelectPage } from "./pages/remote-debug/RemoteSelectPage";
 import { RemoteDebugPage } from "./pages/remote-debug/RemoteDebugPage";
 import { RawChannelsPage } from "./pages/remote-debug/RawChannelsPage";
+import { I18nProvider } from "./i18n";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <Routes>
-        <Route element={<App />}>
-          <Route index element={<HomePage />} />
-          <Route path="imu-debug" element={<ImuDebugPage />} />
-          <Route path="motor-debug" element={<MotorSelectPage />} />
-          <Route path="motor-debug/rs00" element={<RS00DebugPage />} />
-          <Route path="remote-debug" element={<RemoteSelectPage />} />
-          <Route path="remote-debug/mapped" element={<RemoteDebugPage />} />
-          <Route path="remote-debug/raw" element={<RawChannelsPage />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <I18nProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<App />}>
+            <Route index element={<HomePage />} />
+            <Route path="imu-debug" element={<ImuDebugPage />} />
+            <Route path="motor-debug" element={<MotorSelectPage />} />
+            <Route path="motor-debug/rs00" element={<RS00DebugPage />} />
+            <Route path="remote-debug" element={<RemoteSelectPage />} />
+            <Route path="remote-debug/mapped" element={<RemoteDebugPage />} />
+            <Route path="remote-debug/raw" element={<RawChannelsPage />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </I18nProvider>
   </React.StrictMode>,
 );

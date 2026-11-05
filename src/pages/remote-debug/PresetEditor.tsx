@@ -2,21 +2,35 @@ import { useState } from "react";
 import { FiX, FiCheck } from "react-icons/fi";
 import {
   CONTROL_CANDIDATES,
-  CHANNEL_TYPE_LABELS,
   deriveControlType,
   type ChannelMapping,
   type ChannelType,
 } from "../../types/presets";
 import { usePresetStore } from "../../stores/preset-store";
 import { cn } from "../../lib/utils";
+import { useI18n } from "../../i18n";
+import type { I18nKeys } from "../../i18n/zh";
 
 interface Props {
   onClose: () => void;
 }
 
-const ALL_TYPES = Object.entries(CHANNEL_TYPE_LABELS) as [ChannelType, string][];
+/** Maps each channel type to its i18n key, used for the type dropdown. */
+const TYPE_LABELS: Record<ChannelType, I18nKeys> = {
+  stick: "channelType.stick",
+  switch2: "channelType.switch2",
+  switch3: "channelType.switch3",
+  switchSpring: "channelType.switchSpring",
+  knob: "channelType.knob",
+  lever: "channelType.lever",
+  trim: "channelType.trim",
+  unassigned: "channelType.unassigned",
+};
+
+const ALL_TYPES = Object.keys(TYPE_LABELS) as ChannelType[];
 
 export function PresetEditor({ onClose }: Props) {
+  const { t } = useI18n();
   const { presets, activeId, updateChannel } = usePresetStore();
   const preset = presets.find((p) => p.id === activeId);
 
@@ -61,7 +75,7 @@ export function PresetEditor({ onClose }: Props) {
       <div className="w-full max-w-3xl max-h-[90vh] flex flex-col bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800 shrink-0">
           <div>
-            <h2 className="text-sm font-semibold text-zinc-100">编辑通道映射</h2>
+            <h2 className="text-sm font-semibold text-zinc-100">{t("presetEditor.title")}</h2>
             <p className="text-[10px] text-zinc-500 mt-0.5">{preset.name}</p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors">
@@ -70,10 +84,10 @@ export function PresetEditor({ onClose }: Props) {
         </div>
 
         <div className="grid grid-cols-[2.5rem_6rem_1fr_7rem_2.5rem] gap-2 px-5 py-2 bg-zinc-800/50 border-b border-zinc-800 text-[10px] text-zinc-500 font-mono shrink-0">
-          <span>CH</span>
-          <span>控件</span>
-          <span>标签</span>
-          <span>类型 (自动)</span>
+          <span>{t("presetEditor.col.ch")}</span>
+          <span>{t("presetEditor.col.control")}</span>
+          <span>{t("presetEditor.col.label")}</span>
+          <span>{t("presetEditor.col.type")}</span>
           <span></span>
         </div>
 
@@ -87,12 +101,12 @@ export function PresetEditor({ onClose }: Props) {
                 onChange={(e) => handleControlChange(i, e.target.value)}
                 className="h-6 rounded bg-zinc-800 border border-zinc-700 text-zinc-200 text-[11px] px-1.5 focus:outline-none focus:border-zinc-500 w-full"
               >
-                <option value="">—</option>
+                <option value="">{t("presetEditor.control.none")}</option>
                 {CONTROL_CANDIDATES.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
                 {row.control && !CONTROL_CANDIDATES.includes(row.control) && (
-                  <option value={row.control}>{row.control} (自定义)</option>
+                  <option value={row.control}>{t("presetEditor.control.custom", { c: row.control })}</option>
                 )}
               </select>
 
@@ -100,25 +114,25 @@ export function PresetEditor({ onClose }: Props) {
                 value={row.label}
                 onChange={(e) => setRow(i, { label: e.target.value })}
                 onBlur={() => commitRow(i)}
-                placeholder="自定义标签…"
+                placeholder={t("presetEditor.label.placeholder")}
                 className="h-6 rounded bg-zinc-800 border border-zinc-700 text-zinc-200 text-[11px] px-2 focus:outline-none focus:border-zinc-500 w-full"
               />
 
               <select
                 value={row.channelType}
                 onChange={(e) => {
-                  const t = e.target.value as ChannelType;
-                  setRow(i, { channelType: t });
-                  updateChannel(preset.id, i, { ...draft[i], channelType: t });
+                  const ct = e.target.value as ChannelType;
+                  setRow(i, { channelType: ct });
+                  updateChannel(preset.id, i, { ...draft[i], channelType: ct });
                 }}
                 className="h-6 rounded bg-zinc-800 border border-zinc-700 text-zinc-200 text-[11px] px-1.5 focus:outline-none focus:border-zinc-500 w-full"
               >
-                {ALL_TYPES.map(([t, label]) => (
-                  <option key={t} value={t}>{label}</option>
+                {ALL_TYPES.map((ct) => (
+                  <option key={ct} value={ct}>{t(TYPE_LABELS[ct])}</option>
                 ))}
               </select>
 
-              <button onClick={() => commitRow(i)} className="flex items-center justify-center w-6 h-6 rounded hover:bg-zinc-700 text-zinc-600 hover:text-emerald-400 transition-colors" title="应用此行">
+              <button onClick={() => commitRow(i)} className="flex items-center justify-center w-6 h-6 rounded hover:bg-zinc-700 text-zinc-600 hover:text-emerald-400 transition-colors" title={t("presetEditor.row.apply")}>
                 <FiCheck className="w-3 h-3" />
               </button>
             </div>
@@ -126,10 +140,10 @@ export function PresetEditor({ onClose }: Props) {
         </div>
 
         <div className="flex items-center justify-between px-5 py-3 border-t border-zinc-800 shrink-0 bg-zinc-900">
-          <span className="text-[10px] text-zinc-600">选择控件后类型自动推导 · 仍可手动覆盖 · 修改实时保存</span>
+          <span className="text-[10px] text-zinc-600">{t("presetEditor.footer.hint")}</span>
           <button onClick={commitAll} className={cn("flex items-center gap-1.5 h-7 px-4 rounded text-xs font-medium transition-colors", "bg-sky-500/20 text-sky-400 hover:bg-sky-500/30")}>
             <FiCheck className="w-3.5 h-3.5" />
-            完成
+            {t("presetEditor.done")}
           </button>
         </div>
       </div>

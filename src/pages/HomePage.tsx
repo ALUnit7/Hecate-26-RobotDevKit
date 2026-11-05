@@ -8,10 +8,12 @@ import {
   FiTool,
   FiRadio,
 } from "react-icons/fi";
+import { useI18n } from "../i18n";
+import type { I18nKeys } from "../i18n/zh";
 
 interface ToolCard {
-  title: string;
-  description: string;
+  titleKey: I18nKeys;
+  descriptionKey: I18nKeys;
   icon: React.ReactNode;
   path: string;
   status: "ready" | "dev" | "planned";
@@ -19,91 +21,92 @@ interface ToolCard {
 
 const tools: ToolCard[] = [
   {
-    title: "IMU Debugger",
-    description:
-      "Real-time IMU data visualization with charts, 3D attitude display, and AT command console. Supports HiPNUC HI12 series via serial port.",
+    titleKey: "home.tool.imu.title",
+    descriptionKey: "home.tool.imu.desc",
     icon: <FiCpu className="w-7 h-7" />,
     path: "/imu-debug",
     status: "ready",
   },
   {
-    title: "Motor Controller",
-    description:
-      "Motor debugging via CAN-ETH gateway. Supports RS00 (RobStride) MIT protocol with real-time feedback, charts, and CAN frame logging.",
+    titleKey: "home.tool.motor.title",
+    descriptionKey: "home.tool.motor.desc",
     icon: <FiSettings className="w-7 h-7" />,
     path: "/motor-debug",
     status: "ready",
   },
   {
-    title: "Remote Debugger",
-    description:
-      "SBUS RC receiver channel visualization. Real-time 16-channel bars, digital CH17/18, frame-lost & failsafe status. Supports SBUS @ 100k/115.2k baud.",
+    titleKey: "home.tool.remote.title",
+    descriptionKey: "home.tool.remote.desc",
     icon: <FiRadio className="w-7 h-7" />,
     path: "/remote-debug",
     status: "ready",
   },
   {
-    title: "Camera Calibration",
-    description:
-      "Intrinsic and extrinsic camera calibration, distortion correction, stereo calibration tools.",
+    titleKey: "home.tool.camera.title",
+    descriptionKey: "home.tool.camera.desc",
     icon: <FiCamera className="w-7 h-7" />,
     path: "/camera-calibration",
     status: "planned",
   },
   {
-    title: "Sensor Monitor",
-    description:
-      "Generic sensor data monitoring dashboard. Supports multiple data sources and custom layouts.",
+    titleKey: "home.tool.sensor.title",
+    descriptionKey: "home.tool.sensor.desc",
     icon: <FiActivity className="w-7 h-7" />,
     path: "/sensor-monitor",
     status: "planned",
   },
   {
-    title: "Network Tools",
-    description:
-      "UDP/TCP send & receive, ROS topic inspector, network diagnostics for robot communication.",
+    titleKey: "home.tool.network.title",
+    descriptionKey: "home.tool.network.desc",
     icon: <FiWifi className="w-7 h-7" />,
     path: "/network-tools",
     status: "planned",
   },
   {
-    title: "Device Manager",
-    description:
-      "Serial port, USB device, and network interface enumeration. Firmware update utilities.",
+    titleKey: "home.tool.device.title",
+    descriptionKey: "home.tool.device.desc",
     icon: <FiTool className="w-7 h-7" />,
     path: "/device-manager",
     status: "planned",
   },
 ];
 
-const statusLabel: Record<ToolCard["status"], { text: string; cls: string }> = {
-  ready: { text: "Ready", cls: "bg-emerald-500/20 text-emerald-400" },
-  dev: { text: "In Dev", cls: "bg-amber-500/20 text-amber-400" },
-  planned: { text: "Planned", cls: "bg-zinc-500/20 text-zinc-400" },
+const statusKey: Record<ToolCard["status"], I18nKeys> = {
+  ready: "common.status.ready",
+  dev: "common.status.inDev",
+  planned: "common.status.planned",
+};
+
+const statusClass: Record<ToolCard["status"], { cls: string }> = {
+  ready: { cls: "bg-emerald-500/20 text-emerald-400" },
+  dev: { cls: "bg-amber-500/20 text-amber-400" },
+  planned: { cls: "bg-zinc-500/20 text-zinc-400" },
 };
 
 export function HomePage() {
+  const { t } = useI18n();
+
   return (
     <div className="flex-1 overflow-auto p-8">
       {/* Hero */}
       <div className="max-w-5xl mx-auto mb-10">
         <h1 className="text-3xl font-bold text-zinc-100 tracking-tight">
-          Hecate-26 RobotDevKit
+          {t("home.title")}
         </h1>
         <p className="mt-2 text-zinc-400 text-sm">
-          Robot development & debugging toolkit. Select a tool to get started.
+          {t("home.subtitle")}
         </p>
       </div>
 
       {/* Tool grid */}
       <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {tools.map((tool) => {
-          const badge = statusLabel[tool.status];
+          const badge = statusClass[tool.status];
           const isClickable = tool.status === "ready";
 
           const card = (
             <div
-              className={`group relative rounded-xl border p-5 transition-all ${
+              className={`group relative rounded-xl border p-5 h-full flex flex-col transition-all ${
                 isClickable
                   ? "border-zinc-700 bg-zinc-900 hover:border-zinc-500 hover:bg-zinc-800/80 cursor-pointer"
                   : "border-zinc-800 bg-zinc-900/50 opacity-60 cursor-default"
@@ -115,33 +118,33 @@ export function HomePage() {
                 <span
                   className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${badge.cls}`}
                 >
-                  {badge.text}
+                  {t(statusKey[tool.status])}
                 </span>
               </div>
 
               {/* Body */}
               <h2 className="text-sm font-semibold text-zinc-100 mb-1">
-                {tool.title}
+                {t(tool.titleKey)}
               </h2>
               <p className="text-xs text-zinc-500 leading-relaxed">
-                {tool.description}
+                {t(tool.descriptionKey)}
               </p>
             </div>
           );
 
           return isClickable ? (
-            <Link key={tool.path} to={tool.path} className="no-underline">
+            <Link key={tool.path} to={tool.path} className="no-underline h-full">
               {card}
             </Link>
           ) : (
-            <div key={tool.path}>{card}</div>
+            <div key={tool.path} className="h-full">{card}</div>
           );
         })}
       </div>
 
       {/* Footer */}
       <div className="max-w-5xl mx-auto mt-10 text-center text-xs text-zinc-600">
-        H26RDK v1.2.0
+        {t("home.footer")}
       </div>
     </div>
   );

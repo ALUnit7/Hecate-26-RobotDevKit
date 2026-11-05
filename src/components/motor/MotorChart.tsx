@@ -2,21 +2,34 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import uPlot from "uplot";
 import "uplot/dist/uPlot.min.css";
 import { useMotorStore } from "../../stores/motor-store";
+import { useI18n } from "../../i18n";
 
-const TABS = ["Angle", "Velocity", "Torque", "Temperature"] as const;
+// Subset of I18nKeys — assignable to I18nKeys, so safe to pass to t().
+type ChartTabKey =
+  | "motor.chart.tab.angle"
+  | "motor.chart.tab.velocity"
+  | "motor.chart.tab.torque"
+  | "motor.chart.tab.temperature";
 
-const TAB_CONFIG: Record<
-  (typeof TABS)[number],
-  { key: keyof { angle: number; velocity: number; torque: number; temperature: number }; color: string; unit: string }
-> = {
-  Angle: { key: "angle", color: "#60a5fa", unit: "rad" },
-  Velocity: { key: "velocity", color: "#34d399", unit: "rad/s" },
-  Torque: { key: "torque", color: "#fbbf24", unit: "N.m" },
-  Temperature: { key: "temperature", color: "#f87171", unit: "°C" },
+type FeedbackKey = "angle" | "velocity" | "torque" | "temperature";
+
+const TABS: ChartTabKey[] = [
+  "motor.chart.tab.angle",
+  "motor.chart.tab.velocity",
+  "motor.chart.tab.torque",
+  "motor.chart.tab.temperature",
+];
+
+const TAB_CONFIG: Record<ChartTabKey, { key: FeedbackKey; color: string; unit: string }> = {
+  "motor.chart.tab.angle": { key: "angle", color: "#60a5fa", unit: "rad" },
+  "motor.chart.tab.velocity": { key: "velocity", color: "#34d399", unit: "rad/s" },
+  "motor.chart.tab.torque": { key: "torque", color: "#fbbf24", unit: "N.m" },
+  "motor.chart.tab.temperature": { key: "temperature", color: "#f87171", unit: "°C" },
 };
 
 export function MotorChart() {
-  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>("Angle");
+  const { t } = useI18n();
+  const [activeTab, setActiveTab] = useState<ChartTabKey>("motor.chart.tab.angle");
   const chartRef = useRef<HTMLDivElement>(null);
   const uplotRef = useRef<uPlot | null>(null);
   const activeMotorId = useMotorStore((s) => s.activeMotorId);
@@ -26,11 +39,11 @@ export function MotorChart() {
 
   const buildData = useCallback((): uPlot.AlignedData => {
     const cfg = TAB_CONFIG[activeTab];
-    const t = new Float64Array(timestamps.map((ts) => ts / 1000));
+    const ts = new Float64Array(timestamps.map((t) => t / 1000));
     const vals = new Float64Array(
       history.map((fb) => fb[cfg.key as keyof typeof fb] as number)
     );
-    return [t, vals];
+    return [ts, vals];
   }, [activeTab, history, timestamps]);
 
   useEffect(() => {
@@ -62,7 +75,7 @@ export function MotorChart() {
       series: [
         {},
         {
-          label: activeTab,
+          label: t(activeTab),
           stroke: cfg.color,
           width: 1.5,
         },
@@ -110,7 +123,7 @@ export function MotorChart() {
             }`}
             onClick={() => setActiveTab(tab)}
           >
-            {tab}
+            {t(tab)}
           </button>
         ))}
       </div>

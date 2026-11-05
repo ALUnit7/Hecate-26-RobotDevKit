@@ -2,16 +2,19 @@ import { useState, useCallback, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useMotorStore } from "../../stores/motor-store";
 import type { MotorMode } from "../../types/motor";
+import { useI18n } from "../../i18n";
+import type { I18nKeys } from "../../i18n/zh";
 
-const MODE_LABELS: Record<MotorMode, string> = {
-  0: "MIT Control",
-  1: "Position (CSP)",
-  2: "Speed",
+const MODE_LABELS: Record<MotorMode, I18nKeys> = {
+  0: "motor.control.mode.mit",
+  1: "motor.control.mode.position",
+  2: "motor.control.mode.speed",
 };
 
 const FREQ_OPTIONS = [50, 100, 200, 500, 1000];
 
 export function MotorControlPanel() {
+  const { t } = useI18n();
   const connected = useMotorStore((s) => s.connected);
   const activeMotorId = useMotorStore((s) => s.activeMotorId);
   const discoveredMotors = useMotorStore((s) => s.discoveredMotors);
@@ -108,7 +111,7 @@ export function MotorControlPanel() {
       {/* Active motor indicator */}
       {activeMotorId != null && (
         <div className="text-[10px] text-zinc-500 mb-2">
-          Target: <span className="text-emerald-400 font-mono">Motor ID={activeMotorId}</span>
+          {t("motor.control.target")}: <span className="text-emerald-400 font-mono">Motor ID={activeMotorId}</span>
         </div>
       )}
 
@@ -122,7 +125,7 @@ export function MotorControlPanel() {
           }`}
           onClick={() => setProtocol("private")}
         >
-          Private (Default)
+          {t("motor.control.protocol.private")}
         </button>
         <button
           className={`flex-1 py-1 rounded text-[10px] font-medium transition-colors ${
@@ -132,7 +135,7 @@ export function MotorControlPanel() {
           }`}
           onClick={() => setProtocol("mit")}
         >
-          MIT
+          {t("motor.control.protocol.mit")}
         </button>
       </div>
 
@@ -147,7 +150,7 @@ export function MotorControlPanel() {
               : call("motor_enable")
           }
         >
-          Enable
+          {t("motor.control.enable")}
         </button>
         <button
           className="flex-1 py-1.5 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 font-medium disabled:opacity-40"
@@ -158,7 +161,7 @@ export function MotorControlPanel() {
               : call("motor_stop")
           }
         >
-          Stop
+          {t("motor.control.stop")}
         </button>
         <button
           className="flex-1 py-1.5 rounded bg-zinc-700/50 text-zinc-300 hover:bg-zinc-600/50 font-medium disabled:opacity-40"
@@ -169,7 +172,7 @@ export function MotorControlPanel() {
               : call("motor_set_zero")
           }
         >
-          Set Zero
+          {t("motor.control.setZero")}
         </button>
       </div>
 
@@ -181,21 +184,21 @@ export function MotorControlPanel() {
             disabled={!connected}
             onClick={() => callAll("motor_enable_all")}
           >
-            Enable All
+            {t("motor.control.enableAll")}
           </button>
           <button
             className="flex-1 py-1 rounded bg-red-500/10 text-red-500/70 hover:bg-red-500/20 text-[10px] font-medium disabled:opacity-40"
             disabled={!connected}
             onClick={() => callAll("motor_stop_all")}
           >
-            Stop All
+            {t("motor.control.stopAll")}
           </button>
           <button
             className="flex-1 py-1 rounded bg-zinc-700/30 text-zinc-500 hover:bg-zinc-700/50 text-[10px] font-medium disabled:opacity-40"
             disabled={!connected}
             onClick={() => callAll("motor_set_zero_all")}
           >
-            Zero All
+            {t("motor.control.zeroAll")}
           </button>
         </div>
       )}
@@ -212,7 +215,7 @@ export function MotorControlPanel() {
               : call("motor_clear_fault")
           }
         >
-          Clear Fault
+          {t("motor.control.clearFault")}
         </button>
         <button
           className="flex-1 py-1 rounded bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 disabled:opacity-40"
@@ -223,7 +226,7 @@ export function MotorControlPanel() {
               : call("motor_read_fault")
           }
         >
-          Read Fault
+          {t("motor.control.readFault")}
         </button>
         {hasMultiple && (
           <button
@@ -231,7 +234,7 @@ export function MotorControlPanel() {
             disabled={!connected}
             onClick={() => callAll("motor_clear_fault_all")}
           >
-            Clear All
+            {t("motor.control.clearAll")}
           </button>
         )}
       </div>
@@ -251,7 +254,7 @@ export function MotorControlPanel() {
                 disabled={!connected}
                 onClick={() => handleSetMode(m)}
               >
-                {MODE_LABELS[m]}
+                {t(MODE_LABELS[m])}
               </button>
             ))}
           </div>
@@ -261,7 +264,7 @@ export function MotorControlPanel() {
               disabled={!connected}
               onClick={() => callAll("motor_set_mode_all", { mode })}
             >
-              Set Mode "{MODE_LABELS[mode]}" → All Motors
+              {t("motor.control.setModeAll", { mode: t(MODE_LABELS[mode]) })}
             </button>
           )}
         </div>
@@ -270,11 +273,11 @@ export function MotorControlPanel() {
       {/* MIT mode-specific controls */}
       {protocol === "mit" && mode === 0 && (
         <div className="space-y-2">
-          <ParamSlider label="Position" unit="rad" value={position} onChange={setPosition} min={-12.57} max={12.57} step={0.01} />
-          <ParamSlider label="Velocity" unit="rad/s" value={velocity} onChange={setVelocity} min={-33} max={33} step={0.1} />
-          <ParamSlider label="Kp" unit="" value={kp} onChange={setKp} min={0} max={500} step={0.5} />
-          <ParamSlider label="Kd" unit="" value={kd} onChange={setKd} min={0} max={5} step={0.01} />
-          <ParamSlider label="Torque" unit="N.m" value={torque} onChange={setTorque} min={-14} max={14} step={0.01} />
+          <ParamSlider label={t("motor.control.param.position")} unit="rad" value={position} onChange={setPosition} min={-12.57} max={12.57} step={0.01} />
+          <ParamSlider label={t("motor.control.param.velocity")} unit="rad/s" value={velocity} onChange={setVelocity} min={-33} max={33} step={0.1} />
+          <ParamSlider label={t("motor.control.param.kp")} unit="" value={kp} onChange={setKp} min={0} max={500} step={0.5} />
+          <ParamSlider label={t("motor.control.param.kd")} unit="" value={kd} onChange={setKd} min={0} max={5} step={0.01} />
+          <ParamSlider label={t("motor.control.param.torque")} unit="N.m" value={torque} onChange={setTorque} min={-14} max={14} step={0.01} />
 
           {/* Single-shot send (hidden during loop) */}
           {!mitLoopRunning && (
@@ -285,14 +288,14 @@ export function MotorControlPanel() {
                 call("motor_mit_control", { position, velocity, kp, kd, torque })
               }
             >
-              Send MIT Command
+              {t("motor.control.sendMit")}
             </button>
           )}
 
           {/* MIT Loop controls */}
           <div className="mt-3 pt-2 border-t border-zinc-800">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-zinc-500 text-[10px]">Loop Freq:</span>
+              <span className="text-zinc-500 text-[10px]">{t("motor.control.loopFreq")}</span>
               <select
                 className="px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-200 text-[10px] focus:outline-none"
                 value={mitLoopFrequency}
@@ -304,7 +307,7 @@ export function MotorControlPanel() {
                 ))}
               </select>
               {mitLoopRunning && (
-                <span className="text-[10px] text-emerald-400 animate-pulse">Running</span>
+                <span className="text-[10px] text-emerald-400 animate-pulse">{t("motor.control.loopRunning")}</span>
               )}
             </div>
             {!mitLoopRunning ? (
@@ -313,14 +316,14 @@ export function MotorControlPanel() {
                 disabled={!connected}
                 onClick={handleStartLoop}
               >
-                Start Loop
+                {t("motor.control.startLoop")}
               </button>
             ) : (
               <button
                 className="w-full py-1.5 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 font-medium"
                 onClick={handleStopLoop}
               >
-                Stop Loop
+                {t("motor.control.stopLoop")}
               </button>
             )}
           </div>
@@ -329,8 +332,8 @@ export function MotorControlPanel() {
 
       {protocol === "mit" && mode === 1 && (
         <div className="space-y-2">
-          <ParamSlider label="Target Pos" unit="rad" value={targetPos} onChange={setTargetPos} min={-12.57} max={12.57} step={0.01} />
-          <ParamSlider label="Max Speed" unit="rad/s" value={maxSpeed} onChange={setMaxSpeed} min={0} max={33} step={0.1} />
+          <ParamSlider label={t("motor.control.param.targetPos")} unit="rad" value={targetPos} onChange={setTargetPos} min={-12.57} max={12.57} step={0.01} />
+          <ParamSlider label={t("motor.control.param.maxSpeed")} unit="rad/s" value={maxSpeed} onChange={setMaxSpeed} min={0} max={33} step={0.1} />
           <button
             className="w-full py-1.5 rounded bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 font-medium disabled:opacity-40 mt-2"
             disabled={!connected}
@@ -341,15 +344,15 @@ export function MotorControlPanel() {
               })
             }
           >
-            Send Position Command
+            {t("motor.control.sendPosition")}
           </button>
         </div>
       )}
 
       {protocol === "mit" && mode === 2 && (
         <div className="space-y-2">
-          <ParamSlider label="Speed" unit="rad/s" value={targetSpeed} onChange={setTargetSpeed} min={-33} max={33} step={0.1} />
-          <ParamSlider label="Current Limit" unit="A" value={currentLimit} onChange={setCurrentLimit} min={0} max={15.5} step={0.1} />
+          <ParamSlider label={t("motor.control.param.speed")} unit="rad/s" value={targetSpeed} onChange={setTargetSpeed} min={-33} max={33} step={0.1} />
+          <ParamSlider label={t("motor.control.param.currentLimit")} unit="A" value={currentLimit} onChange={setCurrentLimit} min={0} max={15.5} step={0.1} />
           <button
             className="w-full py-1.5 rounded bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 font-medium disabled:opacity-40 mt-2"
             disabled={!connected}
@@ -357,7 +360,7 @@ export function MotorControlPanel() {
               call("motor_speed_control", { targetSpeed, currentLimit })
             }
           >
-            Send Speed Command
+            {t("motor.control.sendSpeed")}
           </button>
         </div>
       )}
@@ -365,9 +368,9 @@ export function MotorControlPanel() {
       {/* Private protocol hint */}
       {protocol === "private" && (
         <div className="text-[10px] text-zinc-500 bg-zinc-800/50 rounded p-2 mt-1">
-          <p className="text-amber-400 font-medium mb-1">Private Protocol Mode (Extended Frame)</p>
-          <p>RS00 defaults to this mode. Enable/Stop/SetZero use extended CAN frames.</p>
-          <p className="mt-1">For MIT control, switch to MIT tab above. Motor must be in MIT mode first (see Params/Config → Protocol Switch).</p>
+          <p className="text-amber-400 font-medium mb-1">{t("motor.control.privateHint.title")}</p>
+          <p>{t("motor.control.privateHint.body")}</p>
+          <p className="mt-1">{t("motor.control.privateHint.mitNote")}</p>
         </div>
       )}
 

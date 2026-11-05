@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { FiCpu, FiArrowRight } from "react-icons/fi";
+import { useI18n } from "../../i18n";
 
 interface MotorOption {
   name: string;
@@ -28,25 +29,28 @@ const motors: MotorOption[] = [
   },
 ];
 
-const statusBadge = {
-  ready: { text: "Ready", cls: "bg-emerald-500/20 text-emerald-400" },
-  planned: { text: "Planned", cls: "bg-zinc-500/20 text-zinc-400" },
-};
-
 export function MotorSelectPage() {
+  const { t } = useI18n();
   return (
     <div className="flex-1 overflow-auto p-8">
       <div className="max-w-3xl mx-auto mb-8">
-        <h1 className="text-2xl font-bold text-zinc-100">Motor Debugger</h1>
+        <h1 className="text-2xl font-bold text-zinc-100">{t("motorSelect.title")}</h1>
         <p className="mt-1 text-zinc-400 text-sm">
-          Select a motor type to begin debugging.
+          {t("motorSelect.subtitle")}
         </p>
       </div>
 
       <div className="max-w-3xl mx-auto space-y-3">
         {motors.map((m) => {
-          const badge = statusBadge[m.status];
           const isClickable = m.status === "ready";
+          const badgeCls =
+            m.status === "ready"
+              ? "bg-emerald-500/20 text-emerald-400"
+              : "bg-zinc-500/20 text-zinc-400";
+          const badgeText =
+            m.status === "ready"
+              ? t("common.status.ready")
+              : t("common.status.planned");
 
           const card = (
             <div
@@ -66,9 +70,9 @@ export function MotorSelectPage() {
                       {m.name}
                     </h2>
                     <span
-                      className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${badge.cls}`}
+                      className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${badgeCls}`}
                     >
-                      {badge.text}
+                      {badgeText}
                     </span>
                   </div>
                   <p className="text-xs text-zinc-500 leading-relaxed mb-1">

@@ -1,7 +1,9 @@
 import { useRef, useEffect, useState } from "react";
 import { useMotorStore } from "../../stores/motor-store";
+import { useI18n } from "../../i18n";
 
 export function CanFrameLog() {
+  const { t } = useI18n();
   const canLog = useMotorStore((s) => s.canLog);
   const clearCanLog = useMotorStore((s) => s.clearCanLog);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -41,21 +43,21 @@ export function CanFrameLog() {
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-1 bg-zinc-900 border-b border-zinc-800 shrink-0">
         <span className="text-[10px] text-zinc-500 font-medium">
-          CAN Frame Log ({canLog.length})
+          {t("canLog.title", { count: canLog.length })}
         </span>
         <div className="flex gap-2">
           <button
             className={`text-[10px] transition-colors ${showRaw ? "text-amber-400" : "text-zinc-500 hover:text-zinc-300"}`}
             onClick={() => setShowRaw(!showRaw)}
-            title="Show raw 13-byte Waveshare frame"
+            title={t("canLog.rawTitle")}
           >
-            {showRaw ? "Raw ON" : "Raw"}
+            {showRaw ? t("canLog.rawOn") : t("canLog.rawOff")}
           </button>
           <button
             className="text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors"
             onClick={clearCanLog}
           >
-            Clear
+            {t("common.clear")}
           </button>
         </div>
       </div>
@@ -67,7 +69,7 @@ export function CanFrameLog() {
       >
         {canLog.length === 0 ? (
           <p className="text-zinc-600 py-2 text-center">
-            No CAN frames yet. Connect and send commands.
+            {t("canLog.empty")}
           </p>
         ) : (
           canLog.map((entry, i) => (

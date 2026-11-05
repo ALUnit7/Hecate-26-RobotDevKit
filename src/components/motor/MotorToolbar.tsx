@@ -2,10 +2,12 @@ import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useMotorStore } from "../../stores/motor-store";
+import { useI18n } from "../../i18n";
 import { FiWifi, FiWifiOff, FiSettings, FiActivity, FiSearch, FiStopCircle } from "react-icons/fi";
 import type { UdpConfig, DiscoveredMotor } from "../../types/motor";
 
 export function MotorToolbar() {
+  const { t } = useI18n();
   const { connected, config, setConfig, setConnected, fps,
     discoveredMotors, setDiscoveredMotors, activeMotorId, setActiveMotor, addMotor } = useMotorStore();
   const [showSettings, setShowSettings] = useState(false);
@@ -84,10 +86,13 @@ export function MotorToolbar() {
       }
 
       if (discovered.length === 0) {
-        setDiagResult("Scan complete: no motors found (0~127). Check CAN baud rate and wiring.");
+        setDiagResult(t("motor.toolbar.scanNoMotors"));
       } else {
         setDiagResult(
-          `Found ${discovered.length} motor(s): ${discovered.map((m) => `ID=${m.id}${m.protocol === "mit" ? " (MIT)" : ""}`).join(", ")}`
+          t("motor.toolbar.scanFound", {
+            n: discovered.length,
+            list: discovered.map((m) => `ID=${m.id}${m.protocol === "mit" ? " (MIT)" : ""}`).join(", "),
+          })
         );
         // Auto-select the first motor
         if (discovered.length >= 1) {
@@ -118,7 +123,7 @@ export function MotorToolbar() {
   return (
     <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border-b border-zinc-800 text-xs shrink-0 flex-wrap">
       {/* Gateway IP */}
-      <label className="text-zinc-500">Gateway</label>
+      <label className="text-zinc-500">{t("motor.toolbar.gateway")}</label>
       <input
         className="w-32 px-2 py-1 rounded bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs focus:outline-none focus:border-zinc-500"
         value={localConfig.gateway_ip}
@@ -128,7 +133,7 @@ export function MotorToolbar() {
         disabled={connected}
         placeholder="192.168.0.7"
       />
-      <label className="text-zinc-500">Port</label>
+      <label className="text-zinc-500">{t("motor.toolbar.port")}</label>
       <input
         className="w-16 px-2 py-1 rounded bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs focus:outline-none focus:border-zinc-500"
         type="number"
@@ -145,7 +150,7 @@ export function MotorToolbar() {
       />
 
       {/* Master ID */}
-      <label className="text-zinc-500 ml-2">Master ID</label>
+      <label className="text-zinc-500 ml-2">{t("motor.toolbar.masterId")}</label>
       <input
         className="w-16 px-2 py-1 rounded bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs focus:outline-none focus:border-zinc-500"
         type="number"
@@ -165,7 +170,7 @@ export function MotorToolbar() {
       <button
         className="p-1 rounded hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 transition-colors"
         onClick={() => setShowSettings(!showSettings)}
-        title="Advanced settings"
+        title={t("motor.toolbar.advancedSettings")}
       >
         <FiSettings className="w-3.5 h-3.5" />
       </button>
@@ -176,7 +181,7 @@ export function MotorToolbar() {
           <button
             className="p-1 rounded hover:bg-zinc-700 text-amber-400 hover:text-amber-300 transition-colors"
             onClick={handleDiagnose}
-            title="Get Device ID"
+            title={t("motor.toolbar.getDeviceId")}
           >
             <FiActivity className="w-3.5 h-3.5" />
           </button>
@@ -184,18 +189,18 @@ export function MotorToolbar() {
             className="p-1 rounded hover:bg-zinc-700 text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-40"
             onClick={handleScan}
             disabled={scanning}
-            title="Scan for motors (ID 0~127)"
+            title={t("motor.toolbar.scanMotors")}
           >
             <FiSearch className="w-3.5 h-3.5" />
           </button>
           {scanning && (
-            <span className="text-[10px] text-blue-400 animate-pulse">Scanning...</span>
+            <span className="text-[10px] text-blue-400 animate-pulse">{t("motor.toolbar.scanning")}</span>
           )}
           {discoveredMotors.length > 1 && (
             <button
               className="p-1 rounded hover:bg-zinc-700 text-red-400 hover:text-red-300 transition-colors"
               onClick={handleStopAll}
-              title="Stop all motors"
+              title={t("motor.toolbar.stopAllMotors")}
             >
               <FiStopCircle className="w-3.5 h-3.5" />
             </button>
@@ -217,7 +222,7 @@ export function MotorToolbar() {
         ) : (
           <FiWifi className="w-3 h-3" />
         )}
-        {connected ? "Disconnect" : "Connect"}
+        {connected ? t("common.disconnect") : t("common.connect")}
       </button>
 
       {/* Status */}
@@ -228,7 +233,7 @@ export function MotorToolbar() {
           }`}
         />
         {connected && (
-          <span className="text-zinc-400">{fps} fps</span>
+          <span className="text-zinc-400">{t("toolbar.fps", { fps })}</span>
         )}
       </div>
 
@@ -240,7 +245,7 @@ export function MotorToolbar() {
       {/* Discovered motors chip badges */}
       {discoveredMotors.length > 0 && (
         <div className="w-full flex items-center gap-1.5 mt-1 pt-1 border-t border-zinc-800">
-          <span className="text-zinc-500 text-[10px] shrink-0">Motors:</span>
+          <span className="text-zinc-500 text-[10px] shrink-0">{t("motor.toolbar.motors")}</span>
           {discoveredMotors.map((m) => (
             <button
               key={m.id}
@@ -267,7 +272,7 @@ export function MotorToolbar() {
             className="text-[9px] text-zinc-500 hover:text-zinc-300 mt-0.5"
             onClick={() => setDiagResult("")}
           >
-            Dismiss
+            {t("motor.toolbar.dismiss")}
           </button>
         </div>
       )}
@@ -276,7 +281,7 @@ export function MotorToolbar() {
       {showSettings && (
         <div className="w-full space-y-1.5 pt-1 mt-1 border-t border-zinc-800">
           <div className="flex items-center gap-2">
-            <label className="text-zinc-500">Local Port</label>
+            <label className="text-zinc-500">{t("motor.toolbar.localPort")}</label>
             <input
               className="w-16 px-2 py-1 rounded bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs focus:outline-none focus:border-zinc-500"
               type="number"
@@ -291,17 +296,17 @@ export function MotorToolbar() {
               placeholder="20001"
             />
             <span className="text-zinc-600 text-[10px]">
-              Must match gateway&apos;s work port (default 20001)
+              {t("motor.toolbar.localPortHint")}
             </span>
           </div>
           {connected && (
             <div className="flex items-center gap-2">
-              <label className="text-zinc-500 text-[10px]">Raw Frame</label>
+              <label className="text-zinc-500 text-[10px]">{t("motor.toolbar.rawFrame")}</label>
               <input
                 className="flex-1 px-2 py-1 rounded bg-zinc-800 border border-zinc-700 text-zinc-200 text-[10px] font-mono focus:outline-none focus:border-zinc-500"
                 value={rawHex}
                 onChange={(e) => setRawHex(e.target.value)}
-                placeholder="13 hex bytes, e.g. 05 00 00 06 78 12 34 56 78 00 00 00 00"
+                placeholder={t("motor.toolbar.rawFramePlaceholder")}
               />
               <button
                 className="px-2 py-1 text-[10px] bg-amber-600 hover:bg-amber-500 text-white rounded shrink-0"
@@ -316,7 +321,7 @@ export function MotorToolbar() {
                   }
                 }}
               >
-                Send Raw
+                {t("motor.toolbar.sendRaw")}
               </button>
             </div>
           )}

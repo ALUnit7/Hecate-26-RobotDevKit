@@ -12,6 +12,7 @@ import { SbusToolbar } from "./SbusToolbar";
 import { PresetToolbar } from "./PresetToolbar";
 import { PresetEditor } from "./PresetEditor";
 import { VirtualStick } from "./VirtualStick";
+import { useI18n } from "../../i18n";
 
 // ── Channel renderers by type ──────────────────────────────────────────────
 
@@ -179,6 +180,7 @@ function ChannelRow({ index, value, mapping }: {
 // ── Main page ──────────────────────────────────────────────────────────────
 
 export function RemoteDebugPage() {
+  const { t } = useI18n();
   useSbusData();
 
   const { data, stats, connected, signalLost } = useSbusStore();
@@ -211,23 +213,23 @@ export function RemoteDebugPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <FiActivity className="w-4 h-4 text-zinc-500" />
-              <h2 className="text-sm font-semibold text-zinc-300">Channels</h2>
-              <span className="text-[10px] text-zinc-600 font-mono">raw 172 – 1811 · mid 992</span>
+              <h2 className="text-sm font-semibold text-zinc-300">{t("remote.channels.title")}</h2>
+              <span className="text-[10px] text-zinc-600 font-mono">{t("remote.channels.range")}</span>
             </div>
             <div className="flex items-center gap-2">
               {data.failsafe && (
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-medium">
-                  FAILSAFE
+                  {t("remote.badge.failsafe")}
                 </span>
               )}
               {data.frame_lost && (
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium">
-                  FRAME LOST
+                  {t("remote.badge.frameLost")}
                 </span>
               )}
               {!connected && (
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-700/50 text-zinc-500">
-                  Not connected
+                  {t("remote.badge.notConnected")}
                 </span>
               )}
             </div>
@@ -262,7 +264,7 @@ export function RemoteDebugPage() {
 
           {/* Digital channels CH17 / CH18 */}
           <div className="flex items-center gap-4 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3">
-            <span className="text-[10px] text-zinc-500 font-mono shrink-0">Digital</span>
+            <span className="text-[10px] text-zinc-500 font-mono shrink-0">{t("remote.digital.label")}</span>
             {[{ label: "CH17", active: data.ch17 }, { label: "CH18", active: data.ch18 }].map(({ label, active }) => (
               <div key={label} className="flex items-center gap-1.5">
                 <div className={cn("w-2.5 h-2.5 rounded-full border",
@@ -277,19 +279,19 @@ export function RemoteDebugPage() {
 
           {/* Stats row */}
           <div className="flex items-center gap-5 text-[10px] text-zinc-500 font-mono bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5">
-            <span className="text-zinc-400 font-sans text-[10px] mr-1">Stats</span>
-            <span>Bytes <span className="text-zinc-300">{stats.bytes_received.toLocaleString()}</span></span>
-            <span>RX <span className="text-zinc-300">{stats.frames_received.toLocaleString()}</span></span>
-            <span>Invalid <span className={stats.frames_invalid > 0 ? "text-amber-400" : "text-zinc-300"}>{stats.frames_invalid}</span></span>
-            <span>Lost <span className={stats.frames_lost > 0 ? "text-red-400" : "text-zinc-300"}>{stats.frames_lost}</span></span>
+            <span className="text-zinc-400 font-sans text-[10px] mr-1">{t("remote.stats.label")}</span>
+            <span>{t("remote.stats.bytes")} <span className="text-zinc-300">{stats.bytes_received.toLocaleString()}</span></span>
+            <span>{t("remote.stats.rx")} <span className="text-zinc-300">{stats.frames_received.toLocaleString()}</span></span>
+            <span>{t("remote.stats.invalid")} <span className={stats.frames_invalid > 0 ? "text-amber-400" : "text-zinc-300"}>{stats.frames_invalid}</span></span>
+            <span>{t("remote.stats.lost")} <span className={stats.frames_lost > 0 ? "text-red-400" : "text-zinc-300"}>{stats.frames_lost}</span></span>
             {connected && !signalLost && stats.frames_received > 0 && (
-              <span className="ml-auto text-emerald-500/80">● live</span>
+              <span className="ml-auto text-emerald-500/80">{t("remote.stats.live")}</span>
             )}
             {connected && stats.bytes_received > 0 && stats.frames_received === 0 && (
-              <span className="ml-auto text-amber-400/80">● bytes in, no valid frames — check baud rate</span>
+              <span className="ml-auto text-amber-400/80">{t("remote.stats.badBaud")}</span>
             )}
             {connected && stats.bytes_received === 0 && (
-              <span className="ml-auto text-zinc-500/80">waiting for data…</span>
+              <span className="ml-auto text-zinc-500/80">{t("remote.stats.waiting")}</span>
             )}
           </div>
 
