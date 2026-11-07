@@ -2,6 +2,7 @@
 mod motor_protocol;
 mod presets;
 mod protocol;
+mod recorder;
 mod sbus;
 mod serial;
 mod state;
@@ -15,6 +16,8 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .manage(AppState::new())
         .invoke_handler(tauri::generate_handler![
             // Serial / IMU
@@ -75,6 +78,10 @@ pub fn run() {
             // SBUS presets (persist to app data dir)
             presets::sbus_load_presets,
             presets::sbus_save_presets,
+            // Unified recorder
+            recorder::rec_start,
+            recorder::rec_stop,
+            recorder::rec_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

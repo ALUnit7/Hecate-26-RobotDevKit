@@ -4,7 +4,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::motor_protocol::{self, CAN_FRAME_SIZE};
 use crate::state::AppState;
@@ -165,6 +165,10 @@ fn udp_recv_thread(
                                 let _ = app.emit("motor-mit-scan-result", feedback.motor_id);
                             }
                             let _ = app.emit("motor-feedback", &feedback);
+                            // Feed unified recorder
+                            if let Some(state) = app.try_state::<AppState>() {
+                                crate::recorder::record_motor(&state.recorder, &feedback);
+                            }
                         }
                     } else if is_extended {
                         // Private protocol extended frame response
@@ -210,6 +214,10 @@ fn udp_recv_thread(
                                         temperature: fb.temperature,
                                     });
                                     let _ = app.emit("motor-private-feedback", &fb);
+                                    // Feed unified recorder
+                                    if let Some(state) = app.try_state::<AppState>() {
+                                        crate::recorder::record_motor_private(&state.recorder, &fb);
+                                    }
                                 }
                             }
                             0x11 => {

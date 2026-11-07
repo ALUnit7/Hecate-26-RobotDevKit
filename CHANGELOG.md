@@ -5,6 +5,24 @@ All notable changes to Hecate-26 RobotDevKit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-11-07
+
+### Added
+- **Unified Recording & Playback system**
+  - Rust `recorder.rs`: JSONL recorder writing `{"t":..., "src":"imu/motor/motor_private/sbus", ...}` per entry
+  - Hooked into all three data sources: `serial.rs` (IMU), `udp.rs` (motor MIT + private), `sbus.rs` (SBUS)
+  - Three Tauri commands: `rec_start` (with save dialog), `rec_stop`, `rec_status`
+  - `RecordingWidget` in AppNavbar: global record button, live timer + frame count while recording
+  - Cancel dialog correctly aborts recording (fixes bug where cancel still triggered recording)
+  - `PlaybackBar` always visible below navbar: open file, play/pause/stop, timeline seek, 0.25x–4x speed
+  - `playback-store.ts`: virtual clock engine, parses JSONL, dispatches entries to stores via RAF loop
+  - `use-playback.ts`: RAF hook mounted at App root, feeds IMU/motor/SBUS data directly into Zustand stores — charts, 3D viewer, dashboards reuse with zero changes
+  - `tauri-plugin-dialog` + `tauri-plugin-fs` added for save/open dialogs and file reading
+- **i18n keys** for recorder and playback UI (zh + en)
+
+### Changed
+- Version bumped to 1.3.0
+
 ## [1.2.0] - 2026-11-04
 
 ### Added

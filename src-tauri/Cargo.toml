@@ -1,6 +1,6 @@
 [package]
 name = "hecate26-robot-devkit"
-version = "1.2.0"
+version = "1.3.0"
 description = "Hecate-26 RobotDevKit - Robot Development & Debugging Toolkit"
 authors = ["you"]
 edition = "2021"
@@ -20,3 +20,6 @@ serde_json = "1"
 serialport = "4"
 log = "0.4"
 env_logger = "0.11"
+chrono = "0.4"
+tauri-plugin-dialog = "2.8.4"
+tauri-plugin-fs = "2.7.1"

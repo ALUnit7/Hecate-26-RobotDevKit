@@ -3,6 +3,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 
 use crate::protocol::HipnucDecoder;
+use crate::recorder::{self, Recorder};
 use crate::udp::UdpConfig;
 
 /// MIT high-frequency loop parameters (shared between command handler and loop thread)
@@ -66,6 +67,10 @@ pub struct AppState {
     pub sbus_port: Mutex<Option<Box<dyn serialport::SerialPort>>>,
     /// Flag to signal the SBUS read thread to stop
     pub sbus_running: Arc<AtomicBool>,
+
+    // ── Unified recorder ──
+    /// Shared recorder state (None = idle, Some = recording)
+    pub recorder: Recorder,
 }
 
 impl AppState {
@@ -87,6 +92,8 @@ impl AppState {
 
             sbus_port: Mutex::new(None),
             sbus_running: Arc::new(AtomicBool::new(false)),
+
+            recorder: recorder::new_recorder(),
         }
     }
 }

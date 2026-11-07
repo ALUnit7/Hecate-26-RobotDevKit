@@ -3,6 +3,7 @@ import { FiArrowLeft, FiHome, FiGlobe } from "react-icons/fi";
 import { useI18n } from "../../i18n";
 import { useLangStore } from "../../i18n";
 import type { Lang } from "../../i18n";
+import { RecordingWidget } from "./RecordingWidget";
 
 export function AppNavbar() {
   const location = useLocation();
@@ -33,25 +34,30 @@ export function AppNavbar() {
         </span>
       )}
 
-      {/* Language switcher */}
-      <div className="ml-auto flex items-center gap-1 bg-zinc-800 rounded p-0.5">
-        <FiGlobe className="w-3 h-3 text-zinc-500 ml-1" />
-        <button
-          onClick={() => switchLang("zh")}
-          className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
-            lang === "zh" ? "bg-sky-500/30 text-sky-300" : "text-zinc-500 hover:text-zinc-300"
-          }`}
-        >
-          中
-        </button>
-        <button
-          onClick={() => switchLang("en")}
-          className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
-            lang === "en" ? "bg-sky-500/30 text-sky-300" : "text-zinc-500 hover:text-zinc-300"
-          }`}
-        >
-          EN
-        </button>
+      {/* Recording widget (global, left of language switcher) */}
+      <div className="ml-auto flex items-center gap-3">
+        <RecordingWidget />
+
+        {/* Language switcher */}
+        <div className="flex items-center gap-1 bg-zinc-800 rounded p-0.5">
+          <FiGlobe className="w-3 h-3 text-zinc-500 ml-1" />
+          <button
+            onClick={() => switchLang("zh")}
+            className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
+              lang === "zh" ? "bg-sky-500/30 text-sky-300" : "text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            中
+          </button>
+          <button
+            onClick={() => switchLang("en")}
+            className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
+              lang === "en" ? "bg-sky-500/30 text-sky-300" : "text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            EN
+          </button>
+        </div>
       </div>
     </div>
   );

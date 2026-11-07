@@ -33,7 +33,7 @@ export const zh = {
   // ── HomePage ───────────────────────────────────────────────────────────
   "home.title": "Hecate-26 RobotDevKit",
   "home.subtitle": "机器人开发调试工具箱，选择工具开始调试。",
-  "home.footer": "H26RDK v1.2.0",
+  "home.footer": "H26RDK v1.3.0",
   "home.tool.imu.title": "IMU 调试器",
   "home.tool.imu.desc": "HiPNUC HI12 系列 IMU 实时可视化，含图表、3D 姿态显示与 AT 命令控制台，通过串口连接。",
   "home.tool.motor.title": "电机控制器",
@@ -302,6 +302,25 @@ export const zh = {
   "stick.left": "左摇杆",
   "stick.right": "右摇杆",
   "stick.unmapped": "未映射",
+
+  // ── Recorder ───────────────────────────────────────────────────────────
+  "rec.record": "录制",
+  "rec.stop": "停止",
+  "rec.recording": "录制中",
+  "rec.elapsed": "时长",
+  "rec.frames": "帧",
+  "rec.savedTo": "已保存到：{path}",
+  "rec.idle": "未录制",
+  "rec.tip": "统一录制 · IMU / 电机 / SBUS 任意模块数据流写入同一文件",
+  "rec.startFail": "启动录制失败：{e}",
+
+  // ── Playback ─────────────────────────────────────────────────────────────
+  "playback.openFile": "打开录制文件",
+  "playback.noFile": "未加载文件",
+  "playback.play": "播放",
+  "playback.pause": "暂停",
+  "playback.stop": "停止",
+  "playback.loadFail": "加载失败：{e}",
 } as const;
 
 export type I18nKeys = keyof typeof zh;

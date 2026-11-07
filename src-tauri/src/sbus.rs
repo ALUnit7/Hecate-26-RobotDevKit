@@ -4,7 +4,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use serde::Serialize;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::state::AppState;
 
@@ -191,6 +191,10 @@ fn sbus_read_thread(
                     if let Some(data) = decoder.feed(byte) {
                         if let Err(e) = app.emit("sbus-data", &data) {
                             log::error!("Failed to emit sbus-data: {}", e);
+                        }
+                        // Feed unified recorder
+                        if let Some(state) = app.try_state::<crate::state::AppState>() {
+                            crate::recorder::record_sbus(&state.recorder, &data);
                         }
                     }
                 }

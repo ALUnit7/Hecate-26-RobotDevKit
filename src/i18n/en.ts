@@ -35,7 +35,7 @@ export const en: Record<I18nKeys, string> = {
   // ── HomePage ───────────────────────────────────────────────────────────
   "home.title": "Hecate-26 RobotDevKit",
   "home.subtitle": "Robot development & debugging toolkit. Select a tool to get started.",
-  "home.footer": "H26RDK v1.2.0",
+  "home.footer": "H26RDK v1.3.0",
   "home.tool.imu.title": "IMU Debugger",
   "home.tool.imu.desc": "Real-time IMU data visualization with charts, 3D attitude display, and AT command console. Supports HiPNUC HI12 series via serial port.",
   "home.tool.motor.title": "Motor Controller",
@@ -304,4 +304,23 @@ export const en: Record<I18nKeys, string> = {
   "stick.left": "Left Stick",
   "stick.right": "Right Stick",
   "stick.unmapped": "Unmapped",
+
+  // ── Recorder ───────────────────────────────────────────────────────────
+  "rec.record": "Record",
+  "rec.stop": "Stop",
+  "rec.recording": "Recording",
+  "rec.elapsed": "Elapsed",
+  "rec.frames": "frames",
+  "rec.savedTo": "Saved to: {path}",
+  "rec.idle": "Not recording",
+  "rec.tip": "Unified recording · IMU / motor / SBUS data streams in one file",
+  "rec.startFail": "Failed to start recording: {e}",
+
+  // ── Playback ─────────────────────────────────────────────────────────────
+  "playback.openFile": "Open recording file",
+  "playback.noFile": "No file loaded",
+  "playback.play": "Play",
+  "playback.pause": "Pause",
+  "playback.stop": "Stop",
+  "playback.loadFail": "Load failed: {e}",
 };

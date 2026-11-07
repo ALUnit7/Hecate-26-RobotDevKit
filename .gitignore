@@ -44,3 +44,4 @@ Restore.md
 docs/*.pdf
 docs/*.html
 docs/*_files/
+test_recording.jsonl

@@ -4,7 +4,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use serde::Serialize;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::protocol::HipnucDecoder;
 use crate::state::AppState;
@@ -116,6 +116,10 @@ fn read_thread(
                 for packet in packets {
                     if let Err(e) = app.emit("imu-data", &packet) {
                         log::error!("Failed to emit imu-data event: {}", e);
+                    }
+                    // Feed unified recorder (no-op if not recording)
+                    if let Some(state) = app.try_state::<AppState>() {
+                        crate::recorder::record_imu(&state.recorder, &packet);
                     }
                 }
             }

@@ -4,15 +4,16 @@
 
 A cross-platform (Windows / Linux) robot debugging toolkit built with **Tauri v2 + React 19 + TypeScript + Rust**. Originally developed for **steering-wheel robots (舵轮机器人)**, it is designed to be a universal debugging suite for any motor-driven robot platform.
 
-Currently features three core modules:
+Currently features three core modules + a unified recording/playback system:
 - **IMU Debugging** — HiPNUC HI12 series 9-axis IMU real-time visualization
 - **Motor Debugging** — **LingZu (灵足时代) RS00** series CAN servo motor control & diagnostics
 - **Remote Debugger** — SBUS RC receiver 16-channel real-time visualization
+- **Recording & Playback** — Record any data stream (IMU/motor/SBUS) to a single `.jsonl` file and replay it on the original timeline
 
 ![Platform](https://img.shields.io/badge/platform-Windows%20|%20Linux-blue)
 ![Framework](https://img.shields.io/badge/framework-Tauri%20v2-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Version](https://img.shields.io/badge/version-1.2.0-brightgreen)
+![Version](https://img.shields.io/badge/version-1.3.0-brightgreen)
 
 ---
 
@@ -87,6 +88,17 @@ Most CAN motor debugging tools require a **USB-CAN adapter (CAN 盒)** and vendo
 | **Diagnostics stats** | Live byte count, valid frames, invalid frames, lost frames |
 | **Signal loss detection** | Prompts Signal Lost when no frames arrive for >500ms |
 | **Configurable baud** | Supports 100000 / 115200 / 200000 baud for different SBUS converters |
+
+### Recording & Playback
+
+| Feature | Description |
+|---------|-------------|
+| **Unified recorder** | One-click recording of IMU / motor / SBUS data streams into a single `.jsonl` file |
+| **Multi-source recording** | One file can contain multiple sources, each entry timestamped with relative `t` (seconds) |
+| **Global recording control** | Record button in navbar with save dialog, live duration + frame counter while recording |
+| **Playback engine** | Load a `.jsonl` file and replay it via RAF loop, injecting data directly into module stores |
+| **Zero-change reuse** | Playback follows the same rendering path as live data — charts, 3D, dashboards all work automatically |
+| **Playback controls** | Play / Pause / Stop / timeline seek / 0.25x–4x speed |
 
 ---
 
@@ -321,34 +333,37 @@ src/
 
 ## Roadmap
 
+### Completed (v1.3.0)
+
+- [x] **Unified recording & playback** — Rust backend JSONL recorder hooked into all three data sources; global recording widget in navbar; playback engine drives RAF loop feeding data directly into stores — charts / 3D / dashboards reuse with zero changes
+- [x] **Chinese / English toggle** — Language switcher in AppNavbar, `localStorage` persistence, instant switch without reload
+
 ### Completed (v1.2.0)
 
 - [x] **SBUS Remote Debugger** — 16-channel real-time visualization, CH17/18 digital indicators, FAILSAFE/FRAME LOST alerts, diagnostic stats
+- [x] **Preset channel mapping** — Per-channel label / type / control assignment, multiple presets, disk persistence
+- [x] **Virtual joystick display** — Dual stick visualization driven by J1–J4 channel mappings
 
 ### Completed (v1.1.x)
 
-- [x] **MIT high-frequency control loop** — Dedicated Rust thread sending MIT commands at 50–2000Hz, frontend sliders update parameters in real-time
+- [x] **MIT high-frequency control loop** — Dedicated Rust thread sending MIT commands at 50–2000Hz
 - [x] **Multi-motor support** — Discover, switch, and independently manage multiple motors on the same CAN bus
 - [x] **Batch commands** — Enable All / Stop All / Set Zero All / Set Mode All / Clear Fault All
-- [x] **CAN log throttling** — Rust-side 500 frames/s cap + frontend RAF batch flush, no more UI freeze on busy bus
-- [x] **Port auto-sync** — Changing gateway port automatically syncs local bind port
+- [x] **CAN log throttling** — Rust-side 500 frames/s cap + frontend RAF batch flush
 
 ### Coming Soon
 
 - [ ] **MIT oscilloscope mode** — Step response, frequency sweep, PID tuning visualization
-- [ ] **Native protocol control** — Direct raw CAN frame composition and sending, enabling low-level motor register access and custom protocol experimentation
-- [ ] **Data recording & export** — Record motor feedback and IMU data to CSV/JSON for offline analysis (backend already implemented, UI integration pending)
+- [ ] **Multi-motor parallel view** — Compare N motor waveforms on the same screen
+- [ ] **System timeline view** — IMU / motor / remote on a shared timeline
 
 ### Planned
 
 - [ ] **Serial response display** — Route AT command ASCII responses back to console
 - [ ] **Disconnect detection** — USB unplug detection + auto-reconnect
-- [ ] **0x3xxx readonly parameters** — Full parameter read support pending RS00 firmware ≥ 0.0.3.5
-- [ ] **More motor types** — Extend motor debugging module to support additional CAN servo motors
-- [ ] **Data replay** — Import recorded CSV and replay on charts / 3D viewer
-- [ ] **Chart enhancements** — Pause/resume, Y-axis lock, hover tooltips, configurable time window
+- [ ] **More motor types** — DJI 3508/6020 and other CAN servo motors
+- [ ] **Chart enhancements** — Pause/resume, Y-axis lock, hover tooltips
 - [ ] **macOS support** — Test and validate macOS build
-- [ ] **i18n** — Chinese / English interface toggle
 
 ---
 
